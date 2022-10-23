@@ -1,0 +1,46 @@
+{
+  "name": "openapiFormat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "dev": "ts-node ./src/dev.ts",
+    "openapi": "ts-node ./src/openapi/index.ts"
+  },
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/space-77/openapiFormat"
+  },
+  "bugs": {
+    "url": "https://github.com/space-77/openapiFormat/issues"
+  },
+  "homepage": "https://github.com/space-77/openapiFormat",
+  "author": "space-77",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/balanced-match": "^1.0.2",
+    "@types/node": "^18.11.3",
+    "openapi-types": "^12.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
+  },
+  "prettier": {
+    "semi": false,
+    "tabWidth": 2,
+    "endOfLine": "crlf",
+    "printWidth": 120,
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "trailingComma": "none",
+    "stylelintIntegration": true
+  },
+  "dependencies": {
+    "axios": "^1.1.3",
+    "balanced-match": "^2.0.0",
+    "is-chinese": "^1.4.8",
+    "is-es2016-keyword": "^1.0.0",
+    "openapi": "^1.0.1",
+    "swagger2openapi": "^7.0.8"
+  }
+}
