@@ -4,7 +4,7 @@ import type { OpenAPIV3 } from 'openapi-types'
 import type { ComponentsChildBase } from './type'
 
 type Schema = OpenAPIV3.ReferenceObject & OpenAPIV3.SchemaObject
-export type ParametersData = OpenAPIV3.ParameterObject
+export type ParametersData = OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
 
 export default class Parameters extends ComponentsBase implements ComponentsChildBase {
   typeName!: string
