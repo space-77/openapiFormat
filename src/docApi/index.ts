@@ -37,7 +37,7 @@ export default class DocApi {
         const pathItem = pathsObject[method] as OpenAPIV3.OperationObject | undefined
         if (!pathItem) continue
 
-        const funInfo = new FunInfo(apiPath, method, pathItem, this.samePath)
+        const funInfo = new FunInfo(this, apiPath, method, pathItem, this.samePath)
         this.apiFunInfos.push(funInfo)
       }
     }

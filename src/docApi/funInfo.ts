@@ -1,6 +1,7 @@
-import { getIdentifierFromUrl } from '../common/utils'
-import type { HttpMethods } from '../common/index'
+import DocApi from './index'
 import type { OpenAPIV3 } from 'openapi-types'
+import type { HttpMethods } from '../common/index'
+import { getIdentifierFromUrl } from '../common/utils'
 
 // const isChinese = require('is-chinese')
 const isKeyword = require('is-es2016-keyword')
@@ -18,6 +19,7 @@ export default class FunInfo {
   }
 
   constructor(
+    private docApi: DocApi,
     private apiPath: string,
     private method: HttpMethods,
     private pathItem: OpenAPIV3.OperationObject,
@@ -51,7 +53,9 @@ export default class FunInfo {
   }
 
   private createParameters() {
-    const { parameters } = this.pathItem
+    const { parameters = [] } = this.pathItem
+    
+    this.docApi.components.addParameters(`${this.funName}Params`, parameters)
   }
 
   private createResultType() {}
