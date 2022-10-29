@@ -1,14 +1,14 @@
 import { OpenAPIV3 } from 'openapi-types'
-import { GenericsItems } from './type'
+import { ComponentsChildBase, GenericsItems } from './type'
 
 export interface TypeItemOption {
   name: string
-  type: string
+  type?: string | ComponentsChildBase
 
   /** 引用其它类型 */
   $ref?: string
-  /** 泛型入参 */
-  genericsItems?: GenericsItems
+  /** 泛型入参 */ // 可能是 字符串 可能是 引用类型 可能是 引用类型也是需要入参的
+  genericsItem?: string |  ComponentsChildBase | TypeItemOption
 
   // 参数的位置，
   paramType?: 'query' | 'header' | 'path' | 'body'
@@ -20,7 +20,7 @@ export interface TypeItemOption {
   enumTypes?: string
   required?: boolean
   example?: string
-  children?: TypeItem[]
+  children?: TypeItemOption[]
 
   description?: string
   /** 外部链接描叙 */
@@ -35,7 +35,6 @@ export interface TypeItemOption {
 
 export default class TypeItem implements TypeItemOption {
   name!: string
-  type!: string
 
   constructor(option: TypeItemOption) {
     for (const [key, value] of Object.entries(option)) {
