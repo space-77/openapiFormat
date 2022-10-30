@@ -20,6 +20,7 @@ export default class ComponentsBase {
   }
 
   protected formatSchema([keyName, keyValue]: [string, SchemasData], requiredNames: string[] = []): TypeItemOption {
+    // console.log(keyName, keyValue)
     const {
       example,
       nullable,
@@ -36,9 +37,12 @@ export default class ComponentsBase {
     // items 泛型入参，最多只有一个泛型入参
     // openapi3 没有了泛型形参定义
     const { $ref: itemRef } = items ?? {}
-    const genericsItem = itemRef
-      ? this.getType(undefined, itemRef)
-      : this.formatSchema([`${keyName}Items`, items as SchemasData])
+    let genericsItem: TypeItemOption['genericsItem']
+    if (itemRef) {
+      genericsItem = this.getType(undefined, itemRef)
+    } else if (items) {
+      genericsItem = this.formatSchema([`${keyName}Items`, items])
+    }
 
     const enumTypes = _enum.join('|') ?? undefined
     const children = !!properties ? Object.entries(properties).map(i => this.formatSchema(i, required)) : undefined

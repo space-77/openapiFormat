@@ -1,6 +1,7 @@
 import axios from 'axios'
 import DocApi from './docApi'
 import type { OpenAPIV3 } from 'openapi-types'
+import path from 'path'
 
 export default class OpenApi {
   json!: OpenAPIV3.Document
@@ -14,15 +15,20 @@ export default class OpenApi {
     try {
       await this.getApiData()
       this.docData = new DocApi(this.json)
-    } catch (error) {}
+      // console.log('99999999999')
+      this.docData.build()
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   async getApiData() {
-    try {
-      const { data } = await axios.get<OpenAPIV3.Document>(this.url)
-      this.json = data
-    } catch (error) {
-      console.error('获取数据异常')
-    }
+    this.json = require(path.join(__dirname, '../mock/openapi.json'))
+    // try {
+    //   const { data } = await axios.get<OpenAPIV3.Document>(this.url)
+    //   this.json = data
+    // } catch (error) {
+    //   console.error('获取数据异常')
+    // }
   }
 }

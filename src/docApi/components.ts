@@ -50,7 +50,8 @@ export default class Components {
   }
 
   private createsPathType() {
-    for (const { item, name } of this.pathItems) {
+    for (const pathItem of this.pathItems) {
+      const { item, name } = pathItem
       const { parameters, responses, requestBody, operationId } = item
       const { description, content = {} } = responses['200'] as ResponseObject
 
@@ -60,16 +61,22 @@ export default class Components {
       )
       if (schema) {
         // const typeName = `${name}Responses`
-        this.schemas[name] = new Schemas(this, name, schema)
+        const response = new Schemas(this, name, schema)
+        this.schemas[name] = response
+        pathItem.responseType = response
         // TODO 返回数据的 content-type
-        console.log(media)
+        // console.log(media)
       }
       if (parameters) {
-        this.parameters[name] = new Parameters(this, name, parameters)
+        const parameter = new Parameters(this, name, parameters)
+        this.parameters[name] = parameter
+        pathItem.parameterType = parameter
       }
 
       if (requestBody) {
-        this.requestBodies[name] = new RequestBodies(this, name, requestBody)
+        const requestBodies = new RequestBodies(this, name, requestBody)
+        this.requestBodies[name] = requestBodies
+        pathItem.requestBodyType = requestBodies
       }
     }
   }

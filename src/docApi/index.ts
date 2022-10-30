@@ -1,9 +1,13 @@
+import fs from 'fs'
 import { HttpMethods, httpMethods } from '../common'
 import FunInfo from './funInfo'
 import Components from './components'
 import type { OpenAPIV3 } from 'openapi-types'
 import { getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
-import isKeyword from 'is-es2016-keyword'
+// import isKeyword from 'is-es2016-keyword'
+import { OperationObject } from '../types/openapi'
+import { ComponentsChildBase } from './type'
+import path from 'path'
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -12,6 +16,9 @@ export interface PathItem {
   item: OpenAPIV3.OperationObject
   method: HttpMethods
   apiPath: string
+  responseType: ComponentsChildBase | null
+  parameterType: ComponentsChildBase | null
+  requestBodyType: ComponentsChildBase | null
 }
 export default class DocApi {
   // 相同的路径
@@ -25,6 +32,31 @@ export default class DocApi {
     // 2、再整理数据
     this.formatFuns()
     this.formatTypes()
+  }
+
+  /**
+   * @deprecated
+   * @description ${description}
+   */
+  public build() {
+    // console.log('object898989')
+    let content = 'class Api {'
+    for (const itemInfo of this.pathItems) {
+      // console.log('-------------')
+      // console.log(item)
+      // console.log('-------------')
+      const { name, item, parameterType, requestBodyType, responseType } = itemInfo
+      const { deprecated, description } = item
+      const descriptionStr = `
+  /**${deprecated ? '\n * @deprecated' : ''}
+   * @description ${description || ''}
+   */\n`
+      const paramsType = `params: ${parameterType?.name}`
+      content += `\n ${descriptionStr} ${name}(${paramsType}): ${responseType?.name}{\n}\n`
+    }
+    content += '}'
+
+    fs.writeFileSync(path.join(__dirname, '../../mock/funApi.ts'), content)
   }
 
   private formatTypes() {
@@ -47,13 +79,14 @@ export default class DocApi {
       if (!pathsObject) break
 
       for (const method of httpMethods) {
-        const item = pathsObject[method] as OpenAPIV3.OperationObject | undefined
+        const item = pathsObject[method] as OperationObject | undefined
         if (!item) continue
         const name = this.createFunName(apiPath, method, item.operationId)
-        this.pathItems.push({ item, name, apiPath, method })
+        const pathItem = { item, name, apiPath, method, parameterType: null, responseType: null, requestBodyType: null }
+        this.pathItems.push(pathItem)
         // const {  } = pathItem
 
-        // const funInfo = new FunInfo(this, apiPath, method, pathItem, this.samePath)
+        // const funInfo = new FunInfo(this, apiPath, method, item, this.samePath)
         // this.apiFunInfos.push(funInfo)
       }
     }

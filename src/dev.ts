@@ -17,6 +17,7 @@ import balanced from 'balanced-match'
 // https://generator3.swagger.io/index.html
 const url = 'https://generator3.swagger.io/openapi.json'
 new OpenApi(url)
+// openapi.
 
 // const isChinese = require('is-chinese')
 
