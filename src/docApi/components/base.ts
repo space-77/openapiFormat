@@ -10,7 +10,7 @@ export default class ComponentsBase {
     if (ref) return this.findRefType(ref)
     if (!type) return 'any'
     if (type === 'integer') return 'number'
-    if (type === 'array') return '[]'
+    if (type === 'array') return 'Array'
     return type
   }
 

@@ -59,10 +59,18 @@ export default class DocApi {
       content += `interface ${typeName} ${refValue ? ` extends ${refValue.typeName}` : ''} {\n`
       // const {  } = typeItems
       for (const typeItem of typeItems) {
-        const { name, type, example, enumTypes, required } = typeItem
+        const { name, type, example, enumTypes, required, genericsItem } = typeItem
         const typeValue = typeof type === 'string' ? type : type?.typeName
 
-        content += `${name}${required ? '' : '?'}:${typeValue}\n`
+        let genericsType = ''
+        if (typeof genericsItem === 'string') {
+          genericsType = `<${genericsItem}>`
+        } else if (genericsItem) {
+          const { typeName, name } = genericsItem as any
+          genericsType = `<${typeName || name || 'any'}>`
+        }
+
+        content += `${name}${required ? '' : '?'}:${typeValue}${genericsType}\n`
       }
       content += '}\n'
     }
