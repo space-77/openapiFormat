@@ -20,6 +20,16 @@ export default class Components {
   callbacks: Record<string, ComponentsChildBase> = {}
   securitySchemes: Record<string, ComponentsChildBase> = {}
 
+  get typeList(): [string, ComponentsChildBase][] {
+    const { schemas, responses, parameters, requestBodies } = this
+    return [
+      ...Object.entries(schemas),
+      ...Object.entries(responses),
+      ...Object.entries(parameters),
+      ...Object.entries(requestBodies)
+    ]
+  }
+
   constructor(private baseDate: Document, private pathItems: PathItem[]) {
     // const { components, paths } = baseDate
     // this.components = components ?? {}

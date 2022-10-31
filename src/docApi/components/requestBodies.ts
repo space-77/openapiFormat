@@ -26,6 +26,7 @@ export default class RequestBodies extends ComponentsBase implements ComponentsC
   refValue?: ComponentsChildBase
 
   extendList: ComponentsChildBase[] = []
+  deprecated?: boolean
   description?: string
   externalDocs?: ExternalDocumentationObject
   additionalProperties?: boolean | ReferenceObject | SchemaObject

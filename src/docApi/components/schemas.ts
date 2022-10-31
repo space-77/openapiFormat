@@ -10,6 +10,7 @@ export default class Schemas extends ComponentsBase implements ComponentsChildBa
   typeName: string
   required: string[] = []
   typeItems: TypeItem[] = []
+  deprecated?: boolean
   description?: string
 
   // 如果 refValue 存在，则该类型直接引用到对应类型上
@@ -32,6 +33,7 @@ export default class Schemas extends ComponentsBase implements ComponentsChildBa
         title,
         required = [],
         properties,
+        deprecated,
         description,
         externalDocs,
         additionalProperties
@@ -39,6 +41,7 @@ export default class Schemas extends ComponentsBase implements ComponentsChildBa
       this.title = title
       this.required = required
       this.properties = properties ?? ({} as any)
+      this.deprecated = deprecated
       this.description = description
       this.externalDocs = externalDocs
       this.additionalProperties = additionalProperties

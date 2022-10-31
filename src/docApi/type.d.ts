@@ -12,12 +12,13 @@ export interface ComponentsChildBase {
   title?: string
 
   // // ref 引用值
-  // refValue?: ComponentsChildBase
+  refValue?: ComponentsChildBase
 
   // TODO 翻译处理名字，添加回调函处理名字
   typeName: string
   typeItems: TypeItem[]
   extendList: ComponentsChildBase[]
+  deprecated?: boolean
   description?: string
   externalDocs?: ExternalDocumentationObject
 

@@ -1,5 +1,5 @@
 import OpenApi from './index'
-import api from '../output'
+// import api from '../output'
 import axios from 'axios'
 import fs from 'fs'
 import path from 'path'

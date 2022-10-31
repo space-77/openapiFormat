@@ -16,9 +16,9 @@ export interface PathItem {
   item: OpenAPIV3.OperationObject
   method: HttpMethods
   apiPath: string
-  responseType: ComponentsChildBase | null
-  parameterType: ComponentsChildBase | null
-  requestBodyType: ComponentsChildBase | null
+  responseType?: ComponentsChildBase
+  parameterType?: ComponentsChildBase
+  requestBodyType?: ComponentsChildBase
 }
 export default class DocApi {
   // 相同的路径
@@ -34,17 +34,9 @@ export default class DocApi {
     this.formatTypes()
   }
 
-  /**
-   * @deprecated
-   * @description ${description}
-   */
-  public build() {
-    // console.log('object898989')
+  private buildTsFile() {
     let content = 'class Api {'
     for (const itemInfo of this.pathItems) {
-      // console.log('-------------')
-      // console.log(item)
-      // console.log('-------------')
       const { name, item, parameterType, requestBodyType, responseType } = itemInfo
       const { deprecated, description } = item
       const descriptionStr = `
@@ -57,6 +49,30 @@ export default class DocApi {
     content += '}'
 
     fs.writeFileSync(path.join(__dirname, '../../mock/funApi.ts'), content)
+  }
+
+  private buildTdDFile() {
+    let content = ''
+    for (const typeInfo of this.components.typeList) {
+      const [typeName, { typeItems, description, refValue }] = typeInfo
+      // console.log(typeInfo)
+      content += `interface ${typeName} ${refValue ? ` extends ${refValue.typeName}` : ''} {\n`
+      // const {  } = typeItems
+      for (const typeItem of typeItems) {
+        const { name, type, example, enumTypes, required } = typeItem
+        const typeValue = typeof type === 'string' ? type : type?.typeName
+
+        content += `${name}${required ? '' : '?'}:${typeValue}\n`
+      }
+      content += '}\n'
+    }
+
+    fs.writeFileSync(path.join(__dirname, '../../mock/index.d.ts'), content)
+  }
+
+  public build() {
+    // this.buildTsFile()
+    this.buildTdDFile()
   }
 
   private formatTypes() {
@@ -82,7 +98,7 @@ export default class DocApi {
         const item = pathsObject[method] as OperationObject | undefined
         if (!item) continue
         const name = this.createFunName(apiPath, method, item.operationId)
-        const pathItem = { item, name, apiPath, method, parameterType: null, responseType: null, requestBodyType: null }
+        const pathItem = { item, name, apiPath, method }
         this.pathItems.push(pathItem)
         // const {  } = pathItem
 
