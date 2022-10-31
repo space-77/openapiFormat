@@ -1,7 +1,13 @@
-import { BaseSchemaObject, ComponentsObject, SchemaItemsObject, SchemaObjectType, SchemasData } from "../../types/openapi"
-import Components from "../components"
-import { ComponentsChildBase } from "../type"
-import { TypeItemOption } from "../typeItem"
+import {
+  BaseSchemaObject,
+  ComponentsObject,
+  SchemaItemsObject,
+  SchemaObjectType,
+  SchemasData
+} from '../../types/openapi'
+import Components from '../components'
+import { ComponentsChildBase } from '../type'
+import TypeItem, { TypeItemOption } from '../typeItem'
 
 export default class ComponentsBase {
   constructor(protected parent: Components) {}
@@ -20,7 +26,7 @@ export default class ComponentsBase {
     return this.parent[model][typeName]
   }
 
-  protected formatSchema([keyName, keyValue]: [string, SchemasData], requiredNames: string[] = []): TypeItemOption {
+  protected formatSchema([keyName, keyValue]: [string, SchemasData], requiredNames: string[] = []): TypeItem {
     // console.log(keyName, keyValue)
     const {
       example,
@@ -40,14 +46,17 @@ export default class ComponentsBase {
     const { $ref: itemRef } = items ?? {}
     let genericsItem: TypeItemOption['genericsItem']
     if (itemRef) {
+      // 泛型 为 引用类型
       genericsItem = this.getType(undefined, itemRef)
     } else if (items) {
+      // 泛型 为 schema 类型
       genericsItem = this.formatSchema([`${keyName}Items`, items])
     }
 
     const enumTypes = _enum.join('|') ?? undefined
+    console.log({ enumTypes })
     const children = !!properties ? Object.entries(properties).map(i => this.formatSchema(i, required)) : undefined
-    return {
+    return new TypeItem({
       example,
       nullable,
       children,
@@ -59,6 +68,6 @@ export default class ComponentsBase {
       genericsItem,
       type: this.getType(type, $ref),
       required: requiredNames.includes(keyName)
-    }
+    })
   }
 }

@@ -3,7 +3,7 @@ import { HttpMethods, httpMethods } from '../common'
 import FunInfo from './funInfo'
 import Components from './components'
 import type { OpenAPIV3 } from 'openapi-types'
-import { getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
+import { getGenericsType, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
 // import isKeyword from 'is-es2016-keyword'
 import { OperationObject } from '../types/openapi'
 import { ComponentsChildBase } from './type'
@@ -62,13 +62,7 @@ export default class DocApi {
         const { name, type, example, enumTypes, required, genericsItem } = typeItem
         const typeValue = typeof type === 'string' ? type : type?.typeName
 
-        let genericsType = ''
-        if (typeof genericsItem === 'string') {
-          genericsType = `<${genericsItem}>`
-        } else if (genericsItem) {
-          const { typeName, name } = genericsItem as any
-          genericsType = `<${typeName || name || 'any'}>`
-        }
+        const genericsType = getGenericsType(genericsItem, enumTypes)
 
         content += `${name}${required ? '' : '?'}:${typeValue}${genericsType}\n`
       }

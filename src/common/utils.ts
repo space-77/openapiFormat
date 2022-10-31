@@ -1,4 +1,6 @@
 import balanced from 'balanced-match'
+import { ComponentsChildBase } from '../docApi/type'
+import TypeItem, { TypeItemOption } from '../docApi/typeItem'
 
 export function getMaxSamePath(paths: string[], samePath = ''): string {
   if (!paths.length || paths.some(path => !path.includes('/'))) return samePath
@@ -55,4 +57,42 @@ export function formatRefTag(ref: string) {
 
 export function isObject(obj: any) {
   return (typeof obj === 'object' || typeof obj === 'function') && obj !== null
+}
+
+export function getGenerics4TypeItem(item: TypeItem, enumTypes?: string): string {
+  // console.log({ enumTypes })
+  const { type, genericsItem } = item
+  if (genericsItem) {
+    if (genericsItem instanceof TypeItem) {
+      return `<${type}<${getGenerics4TypeItem(genericsItem, genericsItem.enumTypes)}>>`
+    } else if (typeof genericsItem === 'string') {
+      return `<${type}<${genericsItem}>>`
+    } else {
+      const { typeName } = genericsItem
+      return `<${type}<${typeName}>>`
+    }
+  } else if (typeof type === 'string') {
+    return typeof enumTypes === 'string' ? `<${enumTypes}>` : `<${type}>`
+  }
+  return ''
+}
+
+export function getGenericsType(generics: TypeItemOption['genericsItem'], enumTypes?: string) {
+  console.log(enumTypes, generics)
+  if (!generics) return ''
+
+  // console.log(enumTypes)
+
+  // console.log(JSON.stringify(generics))
+
+  if (typeof generics === 'string') {
+    return typeof enumTypes === 'string' ? `<${enumTypes}>` : `<${generics}>`
+  } else if (generics instanceof TypeItem) {
+    // 泛型 为 schema 类型,
+    // TODO 泛型包泛型
+    return getGenerics4TypeItem(generics)
+  }
+  // 泛型 为 引用类型
+  const { typeName } = generics as ComponentsChildBase
+  return `<${typeName}>`
 }

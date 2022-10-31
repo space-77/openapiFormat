@@ -26,4 +26,6 @@ export interface ComponentsChildBase {
   additionalProperties?: boolean | ReferenceObject | SchemaObject
 
   init: () => void
+
+  // getGenericsType(generics: TypeItemOption['genericsItem']): string
 }

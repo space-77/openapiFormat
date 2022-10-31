@@ -7,8 +7,8 @@ export interface TypeItemOption {
 
   /** 引用其它类型 */
   $ref?: string
-  /** 泛型入参 */ // 可能是 字符串 可能是 引用类型 可能是 引用类型也是需要入参的
-  genericsItem?: string | ComponentsChildBase | TypeItemOption
+  /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
+  genericsItem?: string | ComponentsChildBase | TypeItem
 
   // 参数的位置，
   paramType?: 'query' | 'header' | 'path' | 'body'
@@ -68,7 +68,7 @@ export default class TypeItem implements TypeItemOption {
   paramType?: 'query' | 'header' | 'path' | 'body'
   deprecated?: boolean
   description?: string
-  genericsItem?: string | ComponentsChildBase | TypeItemOption
+  genericsItem?: string | ComponentsChildBase | TypeItem
   externalDocs?: OpenAPIV3.ExternalDocumentationObject
 
   constructor(option: TypeItemOption) {

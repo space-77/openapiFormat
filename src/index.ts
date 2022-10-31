@@ -23,7 +23,7 @@ export default class OpenApi {
   }
 
   async getApiData() {
-    this.json = require(path.join(__dirname, '../mock/swagger2openapi.json'))
+    this.json = require(path.join(__dirname, '../mock/openapi.json'))
     // try {
     //   const { data } = await axios.get<OpenAPIV3.Document>(this.url)
     //   this.json = data
