@@ -54,7 +54,7 @@ export default class Schemas extends ComponentsBase implements ComponentsChildBa
       this.refValue = this.findRefType(this.$ref)
     } else {
       for (const keyItem of Object.entries(this.properties)) {
-        this.typeItems.push(new TypeItem(this.formatSchema(keyItem, this.required))) // = this.start(this.properties, this.required)
+        this.typeItems.push(this.formatSchema(keyItem, this.required)) // = this.start(this.properties, this.required)
       }
     }
   }

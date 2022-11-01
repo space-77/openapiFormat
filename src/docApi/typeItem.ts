@@ -17,7 +17,7 @@ export interface TypeItemOption {
   // format?: string
   default?: string
 
-  enumTypes?: string
+  enumTypes?: any[]
   required?: boolean
   example?: string
   children?: TypeItemOption[]
@@ -64,7 +64,7 @@ export default class TypeItem implements TypeItemOption {
   required?: boolean
   nullable?: boolean
   children?: TypeItemOption[]
-  enumTypes?: string
+  enumTypes?: any[]
   paramType?: 'query' | 'header' | 'path' | 'body'
   deprecated?: boolean
   description?: string

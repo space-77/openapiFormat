@@ -53,19 +53,21 @@ export default class ComponentsBase {
       genericsItem = this.formatSchema([`${keyName}Items`, items])
     }
 
-    const enumTypes = _enum.join('|') ?? undefined
-    console.log({ enumTypes })
+    // const enumTypes = _enum.join('|') ?? undefined
+    // console.log({ keyName, genericsItem, enumTypes })
+
+    // console.log({ enumTypes })
     const children = !!properties ? Object.entries(properties).map(i => this.formatSchema(i, required)) : undefined
     return new TypeItem({
       example,
       nullable,
       children,
-      enumTypes,
       deprecated,
       description,
       externalDocs,
-      name: keyName,
       genericsItem,
+      name: keyName,
+      enumTypes: _enum,
       type: this.getType(type, $ref),
       required: requiredNames.includes(keyName)
     })

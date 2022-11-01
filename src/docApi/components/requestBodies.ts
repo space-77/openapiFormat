@@ -64,7 +64,7 @@ export default class RequestBodies extends ComponentsBase implements ComponentsC
     } else {
       const schemaList = Object.entries(schema as SchemaObject)
       for (const keyValue of schemaList) {
-        this.typeItems.push(new TypeItem(this.formatSchema(keyValue)))
+        this.typeItems.push(this.formatSchema(keyValue))
       }
     }
   }

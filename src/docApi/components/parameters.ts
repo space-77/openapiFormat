@@ -53,7 +53,7 @@ export default class Parameters extends ComponentsBase implements ComponentsChil
     const type = this.getType(defType, $ref)
 
     const paramType = data.in as TypeItemOption['paramType']
-    const enumTypes = (schema as Schema)?.enum?.join('|') ?? undefined
+    const enumTypes = (schema as Schema)?.enum
 
     return { name, type, paramType, required, example, enumTypes, description, deprecated, genericsItem }
   }

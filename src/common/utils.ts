@@ -59,12 +59,20 @@ export function isObject(obj: any) {
   return (typeof obj === 'object' || typeof obj === 'function') && obj !== null
 }
 
-export function getGenerics4TypeItem(item: TypeItem, enumTypes?: string): string {
+export function getEnumType(type: string, enumTypes: any[] = []) {
+  if (enumTypes.length > 0) {
+    if (type === 'string') return enumTypes.map(i => `"${i}"`).join(' | ')
+    return enumTypes.join(' | ')
+  }
+  return type
+}
+
+export function getGenerics4TypeItem(item: TypeItem): string {
   // console.log({ enumTypes })
-  const { type, genericsItem } = item
+  const { type, genericsItem, enumTypes } = item
   if (genericsItem) {
     if (genericsItem instanceof TypeItem) {
-      return `<${type}<${getGenerics4TypeItem(genericsItem, genericsItem.enumTypes)}>>`
+      return `<${type}<${getGenerics4TypeItem(genericsItem)}>>`
     } else if (typeof genericsItem === 'string') {
       return `<${type}<${genericsItem}>>`
     } else {
@@ -72,13 +80,14 @@ export function getGenerics4TypeItem(item: TypeItem, enumTypes?: string): string
       return `<${type}<${typeName}>>`
     }
   } else if (typeof type === 'string') {
-    return typeof enumTypes === 'string' ? `<${enumTypes}>` : `<${type}>`
+    return `<${getEnumType(type, enumTypes)}>`
   }
+  console.log(JSON.stringify(item))
   return ''
 }
 
-export function getGenericsType(generics: TypeItemOption['genericsItem'], enumTypes?: string) {
-  console.log(enumTypes, generics)
+export function getGenericsType(generics: TypeItemOption['genericsItem'], enumTypes: any[] = []) {
+  // console.log(enumTypes, generics)
   if (!generics) return ''
 
   // console.log(enumTypes)
@@ -86,7 +95,7 @@ export function getGenericsType(generics: TypeItemOption['genericsItem'], enumTy
   // console.log(JSON.stringify(generics))
 
   if (typeof generics === 'string') {
-    return typeof enumTypes === 'string' ? `<${enumTypes}>` : `<${generics}>`
+    return `<${getEnumType(generics, enumTypes)}>`
   } else if (generics instanceof TypeItem) {
     // 泛型 为 schema 类型,
     // TODO 泛型包泛型
