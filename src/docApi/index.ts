@@ -16,6 +16,7 @@ export interface PathItem {
   item: OpenAPIV3.OperationObject
   method: HttpMethods
   apiPath: string
+  moduleName: string
   responseType?: ComponentsChildBase
   parameterType?: ComponentsChildBase
   requestBodyType?: ComponentsChildBase
@@ -34,22 +35,22 @@ export default class DocApi {
     this.formatTypes()
   }
 
-  private buildTsFile() {
-    let content = 'class Api {'
-    for (const itemInfo of this.pathItems) {
-      const { name, item, parameterType, requestBodyType, responseType } = itemInfo
-      const { deprecated, description } = item
-      const descriptionStr = `
-  /**${deprecated ? '\n * @deprecated' : ''}
-   * @description ${description || ''}
-   */\n`
-      const paramsType = `params: ${parameterType?.name}`
-      content += `\n ${descriptionStr} ${name}(${paramsType}): ${responseType?.name}{\n}\n`
-    }
-    content += '}'
+  // private buildTsFile() {
+  //   let content = 'class Api {'
+  //   for (const itemInfo of this.pathItems) {
+  //     const { name, item, parameterType, requestBodyType, responseType } = itemInfo
+  //     const { deprecated, description } = item
+  //     const descriptionStr = `
+  // /**${deprecated ? '\n * @deprecated' : ''}
+  //  * @description ${description || ''}
+  //  */\n`
+  //     const paramsType = `params: ${parameterType?.name}`
+  //     content += `\n ${descriptionStr} ${name}(${paramsType}): ${responseType?.name}{\n}\n`
+  //   }
+  //   content += '}'
 
-    fs.writeFileSync(path.join(__dirname, '../../mock/funApi.ts'), content)
-  }
+  //   fs.writeFileSync(path.join(__dirname, '../../mock/funApi.ts'), content)
+  // }
 
   private buildTdDFile() {
     let content = ''
@@ -58,13 +59,14 @@ export default class DocApi {
       // console.log(typeInfo)
       content += `interface ${typeName} ${refValue ? ` extends ${refValue.typeName}` : ''} {\n`
       // const {  } = typeItems
+      typeItems.sort((a, b) => a.name.length - b.name.length)
       for (const typeItem of typeItems) {
         const { name, type, example, enumTypes, required, genericsItem } = typeItem
         const typeValue = typeof type === 'string' ? type : type?.typeName
 
         const genericsType = getGenericsType(genericsItem, enumTypes)
 
-        content += `${name}${required ? '' : '?'}:${typeValue}${genericsType}\n`
+        content += `${name.replace(/-/g, '_')}${required ? '' : '?'}:${typeValue}${genericsType}\n`
       }
       content += '}\n'
     }
@@ -72,10 +74,10 @@ export default class DocApi {
     fs.writeFileSync(path.join(__dirname, '../../mock/index.d.ts'), content)
   }
 
-  public build() {
-    // this.buildTsFile()
-    this.buildTdDFile()
-  }
+  // public build() {
+  //   // this.buildTsFile()
+  //   this.buildTdDFile()
+  // }
 
   private formatTypes() {
     // 1、梳理 收集 类型以及类型索引
@@ -100,7 +102,7 @@ export default class DocApi {
         const item = pathsObject[method] as OperationObject | undefined
         if (!item) continue
         const name = this.createFunName(apiPath, method, item.operationId)
-        const pathItem = { item, name, apiPath, method }
+        const pathItem = { item, name, apiPath, method, moduleName: item.tags?.[0] ?? 'defalutModule' }
         this.pathItems.push(pathItem)
         // const {  } = pathItem
 

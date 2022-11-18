@@ -5,6 +5,7 @@ import Parameters from './components/parameters'
 import RequestBodies from './components/requestBodies'
 import { ComponentsChildBase } from './type'
 import type { Document, ResponseObject, OperationObject } from '../types/openapi'
+import { firstToUpper } from '../common/utils'
 
 export default class Components {
   // components!: OpenAPIV3.ComponentsObject
@@ -27,7 +28,7 @@ export default class Components {
       ...Object.entries(responses),
       ...Object.entries(parameters),
       ...Object.entries(requestBodies)
-    ]
+    ] // .map(([typeName, typeInfo]) => ['', typeInfo])
   }
 
   constructor(private baseDate: Document, private pathItems: PathItem[]) {
@@ -43,49 +44,56 @@ export default class Components {
     const { schemas = {}, parameters = {}, requestBodies = {}, responses = {} } = this.baseDate.components ?? {}
 
     Object.entries(schemas).forEach(([k, v]) => {
-      this.schemas[k] = new Schemas(this, k, v as any)
+      const typeName = firstToUpper(k)
+      this.schemas[typeName] = new Schemas(this, typeName, v as any)
     })
 
     Object.entries(parameters).forEach(([k, v]) => {
-      this.parameters[k] = new Parameters(this, k, [v] as any[])
+      const typeName = firstToUpper(k)
+      this.parameters[typeName] = new Parameters(this, typeName, [v] as any[])
     })
 
     Object.entries(requestBodies).forEach(([k, v]) => {
-      this.requestBodies[k] = new RequestBodies(this, k, v)
+      const typeName = firstToUpper(k)
+      this.requestBodies[typeName] = new RequestBodies(this, typeName, v)
     })
 
     Object.entries(responses).forEach(([k, v]) => {
-      this.responses[k] = new Responses(this, k, v)
+      const typeName = firstToUpper(k)
+      this.responses[typeName] = new Responses(this, typeName, v)
     })
   }
 
   private createsPathType() {
     for (const pathItem of this.pathItems) {
       const { item, name } = pathItem
+      const typeName = firstToUpper(name)
+
       const { parameters, responses, requestBody, operationId } = item
-      const { description, content = {} } = responses['200'] as ResponseObject
+      const { description, content = {} } = (responses['200'] as ResponseObject) ?? {}
 
       // FIXME 目前只取第一个， 当一个响应匹配多个键时，只有最明确的键才适用。比如：text/plain 会覆盖 text/*
-      const [[media, { schema, example, examples, encoding }]] = Object.entries(content).sort(
-        ([a], [b]) => b.length - a.length
-      )
-      if (schema) {
-        // const typeName = `${name}Responses`
-        const response = new Schemas(this, name, schema)
-        this.schemas[name] = response
-        pathItem.responseType = response
-        // TODO 返回数据的 content-type
-        // console.log(media)
+      const [responseInfo] = Object.entries(content).sort(([a], [b]) => b.length - a.length)
+      if (responseInfo) {
+        const [media, { schema, example, examples, encoding }] = responseInfo
+        if (schema) {
+          // const typeName = `${name}Responses`
+          const response = new Schemas(this, typeName, schema)
+          this.schemas[typeName] = response
+          pathItem.responseType = response
+          // TODO 返回数据的 content-type
+          // console.log(media)
+        }
       }
       if (parameters) {
-        const parameter = new Parameters(this, name, parameters)
-        this.parameters[name] = parameter
+        const parameter = new Parameters(this, typeName, parameters)
+        this.parameters[typeName] = parameter
         pathItem.parameterType = parameter
       }
 
       if (requestBody) {
-        const requestBodies = new RequestBodies(this, name, requestBody)
-        this.requestBodies[name] = requestBodies
+        const requestBodies = new RequestBodies(this, typeName, requestBody)
+        this.requestBodies[typeName] = requestBodies
         pathItem.requestBodyType = requestBodies
       }
     }

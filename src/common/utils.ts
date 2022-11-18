@@ -2,6 +2,14 @@ import balanced from 'balanced-match'
 import { ComponentsChildBase } from '../docApi/type'
 import TypeItem, { TypeItemOption } from '../docApi/typeItem'
 
+/**
+ * @param str
+ * @description 首字母大写
+ */
+export function firstToUpper(str: string) {
+  return str.replace(/^(\S)/g, val => val.toUpperCase())
+}
+
 export function getMaxSamePath(paths: string[], samePath = ''): string {
   if (!paths.length || paths.some(path => !path.includes('/'))) return samePath
 
