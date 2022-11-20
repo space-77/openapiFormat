@@ -12,15 +12,18 @@ export interface ComponentsChildBase {
   title?: string
 
   // // ref 引用值
-  refValue?: ComponentsChildBase
+  refValues: ComponentsChildBase[]
 
   // TODO 翻译处理名字，添加回调函处理名字
   typeName: string
+
+  isEmpty: boolean
   typeItems: TypeItem[]
-  extendList: ComponentsChildBase[]
+  // extendList: ComponentsChildBase[]
   deprecated?: boolean
   description?: string
   externalDocs?: ExternalDocumentationObject
+  resConentType?: string
 
   // TODO Record
   additionalProperties?: boolean | ReferenceObject | SchemaObject

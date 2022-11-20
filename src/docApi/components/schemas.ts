@@ -6,26 +6,14 @@ import type { SchemasData, SchemaObject, ReferenceObject, ExternalDocumentationO
 
 export default class Schemas extends ComponentsBase implements ComponentsChildBase {
   $ref?: string
-  title?: string
-  typeName: string
   required: string[] = []
-  typeItems: TypeItem[] = []
-  deprecated?: boolean
-  description?: string
-
-  // 如果 refValue 存在，则该类型直接引用到对应类型上
-  // interface ${typeName} ectends ${refValue.typeName} {}
-  refValue?: ComponentsChildBase
-
   properties: Record<string, SchemaObject> = {}
-  extendList: ComponentsChildBase[] = []
   externalDocs?: ExternalDocumentationObject
   additionalProperties?: boolean | ReferenceObject | SchemaObject
 
-  constructor(parent: Components, public name: string, private data: SchemasData) {
-    super(parent)
-    this.typeName = name
-    const {$ref} = data as ReferenceObject
+  constructor(parent: Components, public name: string, private data: SchemasData, public resConentType?: string) {
+    super(parent, name)
+    const { $ref } = data as ReferenceObject
     if ($ref) {
       this.$ref = $ref
     } else {
@@ -51,7 +39,7 @@ export default class Schemas extends ComponentsBase implements ComponentsChildBa
   init = () => {
     if (this.$ref) {
       // 引用其它类型
-      this.refValue = this.findRefType(this.$ref)
+      this.pushRef(this.$ref)
     } else {
       for (const keyItem of Object.entries(this.properties)) {
         this.typeItems.push(this.formatSchema(keyItem, this.required)) // = this.start(this.properties, this.required)

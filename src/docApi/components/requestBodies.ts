@@ -1,4 +1,3 @@
-import TypeItem from '../typeItem'
 import Components from '../components'
 import ComponentsBase from './base'
 import type { ComponentsChildBase } from '../type'
@@ -10,37 +9,25 @@ import type {
   MediaTypeObject,
   ReferenceObject,
   RequestBodyObject,
-  ExternalDocumentationObject,
+  ExternalDocumentationObject
 } from '../../types/openapi'
 
 export default class RequestBodies extends ComponentsBase implements ComponentsChildBase {
-  title?: string
   required?: boolean
   contentType?: string
 
-  typeName: string
-  typeItems: TypeItem[] = []
-
-  // 如果 refValue 存在，则该类型直接引用到对应类型上
-  // interface ${typeName} ectends ${refValue.typeName} {}
-  refValue?: ComponentsChildBase
-
-  extendList: ComponentsChildBase[] = []
-  deprecated?: boolean
-  description?: string
   externalDocs?: ExternalDocumentationObject
   additionalProperties?: boolean | ReferenceObject | SchemaObject
 
   constructor(parent: Components, public name: string, private data: BodyObject | ResponseData) {
-    super(parent)
-    this.typeName = name
+    super(parent, name)
   }
 
   init() {
     const { $ref } = this.data as ReferenceObject
     if ($ref) {
       // 引用其它类型
-      this.refValue = this.findRefType($ref)
+      this.pushRef($ref)
     } else {
       const { required } = this.data as RequestBodyObject
       const { content = {}, description } = this.data as RequestBodyObject | ResponseObject
@@ -60,11 +47,13 @@ export default class RequestBodies extends ComponentsBase implements ComponentsC
     const { $ref } = schema as ReferenceObject
     if ($ref) {
       // 引用其它类型
-      this.refValue = this.findRefType($ref)
+      this.pushRef($ref)
     } else {
       const schemaList = Object.entries(schema as SchemaObject)
       for (const keyValue of schemaList) {
-        this.typeItems.push(this.formatSchema(keyValue))
+        const item = this.formatSchema(keyValue)
+        item.paramType = 'body'
+        this.typeItems.push(item)
       }
     }
   }

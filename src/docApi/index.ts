@@ -1,9 +1,9 @@
 import fs from 'fs'
 import { HttpMethods, httpMethods } from '../common'
-import FunInfo from './funInfo'
+// import FunInfo from './funInfo'
 import Components from './components'
 import type { OpenAPIV3 } from 'openapi-types'
-import { getGenericsType, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
+import { firstToUpper, getGenericsType, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
 // import isKeyword from 'is-es2016-keyword'
 import { OperationObject } from '../types/openapi'
 import { ComponentsChildBase } from './type'
@@ -16,17 +16,44 @@ export interface PathItem {
   item: OpenAPIV3.OperationObject
   method: HttpMethods
   apiPath: string
+  bodyName: string
   moduleName: string
+  paramsName: string
+  responseName: string
   responseType?: ComponentsChildBase
   parameterType?: ComponentsChildBase
   requestBodyType?: ComponentsChildBase
 }
+
+export type FuncGroupList = {
+  moduleName: string
+  description?: string
+  funcInfoList: PathItem[]
+}
+
 export default class DocApi {
   // 相同的路径
-  samePath = ''
-  pathItems: PathItem[] = []
+  private samePath = ''
+  private pathItems: PathItem[] = []
   components!: Components
-  apiFunInfos: FunInfo[] = []
+  get funcGroupList() {
+    const funcGroupList: FuncGroupList[] = []
+    const { pathItems, json } = this
+    const { tags = [] } = json
+
+    for (const pathItem of pathItems) {
+      const { moduleName } = pathItem
+      const funcInfo = funcGroupList.find(i => i.moduleName === moduleName)
+      if (!funcInfo) {
+        const { description } = tags.find(i => i.name === moduleName) ?? {}
+        funcGroupList.push({ moduleName, description, funcInfoList: [pathItem] })
+      } else {
+        funcInfo.funcInfoList.push(pathItem)
+      }
+    }
+    return funcGroupList
+  }
+  // apiFunInfos: FunInfo[] = []
 
   constructor(private json: OpenAPIV3.Document) {
     // 1、先收集数据
@@ -52,27 +79,27 @@ export default class DocApi {
   //   fs.writeFileSync(path.join(__dirname, '../../mock/funApi.ts'), content)
   // }
 
-  private buildTdDFile() {
-    let content = ''
-    for (const typeInfo of this.components.typeList) {
-      const [typeName, { typeItems, description, refValue }] = typeInfo
-      // console.log(typeInfo)
-      content += `interface ${typeName} ${refValue ? ` extends ${refValue.typeName}` : ''} {\n`
-      // const {  } = typeItems
-      typeItems.sort((a, b) => a.name.length - b.name.length)
-      for (const typeItem of typeItems) {
-        const { name, type, example, enumTypes, required, genericsItem } = typeItem
-        const typeValue = typeof type === 'string' ? type : type?.typeName
+  // private buildTdDFile() {
+  //   let content = ''
+  //   for (const typeInfo of this.components.typeList) {
+  //     const [typeName, { typeItems, description, refValues }] = typeInfo
+  //     // console.log(typeInfo)
+  //     content += `interface ${typeName} ${refValues.length > 0 ? ` extends ${refValues.map(i => i.typeName).join(',')}` : ''} {\n`
+  //     // const {  } = typeItems
+  //     typeItems.sort((a, b) => a.name.length - b.name.length)
+  //     for (const typeItem of typeItems) {
+  //       const { name, type, example, enumTypes, required, genericsItem } = typeItem
+  //       const typeValue = typeof type === 'string' ? type : type?.typeName
 
-        const genericsType = getGenericsType(genericsItem, enumTypes)
+  //       const genericsType = getGenericsType(genericsItem, enumTypes)
 
-        content += `${name.replace(/-/g, '_')}${required ? '' : '?'}:${typeValue}${genericsType}\n`
-      }
-      content += '}\n'
-    }
+  //       content += `${name.replace(/-/g, '_')}${required ? '' : '?'}:${typeValue}${genericsType}\n`
+  //     }
+  //     content += '}\n'
+  //   }
 
-    fs.writeFileSync(path.join(__dirname, '../../mock/index.d.ts'), content)
-  }
+  //   fs.writeFileSync(path.join(__dirname, '../../mock/index.d.ts'), content)
+  // }
 
   // public build() {
   //   // this.buildTsFile()
@@ -102,7 +129,21 @@ export default class DocApi {
         const item = pathsObject[method] as OperationObject | undefined
         if (!item) continue
         const name = this.createFunName(apiPath, method, item.operationId)
-        const pathItem = { item, name, apiPath, method, moduleName: item.tags?.[0] ?? 'defalutModule' }
+        // FIXME 参数类型 和 返回体类型 的名字需要整理成同一
+        const funcName = firstToUpper(name)
+        const bodyName = `${funcName}Body`
+        const paramsName = `${funcName}Params`
+        const responseName = `${funcName}Res`
+        const pathItem = {
+          item,
+          name,
+          method,
+          apiPath,
+          bodyName,
+          paramsName,
+          responseName,
+          moduleName: item.tags?.[0] ?? 'defalutModule'
+        }
         this.pathItems.push(pathItem)
         // const {  } = pathItem
 

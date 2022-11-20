@@ -14,25 +14,18 @@ type Schema = ReferenceObject & SchemaObject
 export type ParametersData = ReferenceObject | ParameterObject
 
 export default class Parameters extends ComponentsBase implements ComponentsChildBase {
-  title?: string
-  typeName: string
-  typeItems: TypeItem[] = []
-  description?: string
   additionalProperties: any
-  extendList: ComponentsChildBase[] = []
   externalDocs?: ExternalDocumentationObject
 
   constructor(parent: Components, public name: string, private datas: ParametersData[]) {
-    super(parent)
-    this.typeName = name
+    super(parent, name)
   }
 
   init = () => {
     for (const keyItem of this.datas) {
       const { $ref } = keyItem as any
       if ($ref) {
-        const extend = this.findRefType($ref)
-        if (extend) this.extendList.push(extend)
+        this.pushRef($ref)
       } else {
         this.typeItems.push(new TypeItem(this.format(keyItem as ParameterObject)))
       }

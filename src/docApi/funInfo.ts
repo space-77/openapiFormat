@@ -54,7 +54,7 @@ export default class FunInfo {
   private createParameters() {
     const { parameters = [] } = this.pathItem
 
-    this.docApi.components.addParameters(`${this.funName}Params`, parameters)
+    // this.docApi.components.addParameters(`${this.funName}Params`, parameters)
   }
 
   private createResultType() {}

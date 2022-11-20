@@ -1,16 +1,31 @@
 import {
+  SchemasData,
   BaseSchemaObject,
   ComponentsObject,
   SchemaItemsObject,
-  SchemaObjectType,
-  SchemasData
+  SchemaObjectType
 } from '../../types/openapi'
 import Components from '../components'
 import { ComponentsChildBase } from '../type'
 import TypeItem, { TypeItemOption } from '../typeItem'
 
 export default class ComponentsBase {
-  constructor(protected parent: Components) {}
+  baseRef = '#/components/'
+  title?: string
+  typeName: string
+  typeItems: TypeItem[] = []
+  deprecated?: boolean
+  description?: string
+  refValues: ComponentsChildBase[] = []
+
+  get isEmpty() {
+    const { typeItems, refValues } = this
+    return refValues.every(i => i.isEmpty) && typeItems.length === 0
+  }
+
+  constructor(protected parent: Components, public name: string) {
+    this.typeName = parent.checkName(name)
+  }
 
   getType(type?: SchemaObjectType, ref?: string): TypeItemOption['type'] {
     if (ref) return this.findRefType(ref)
@@ -21,9 +36,16 @@ export default class ComponentsBase {
   }
 
   findRefType(ref: string): ComponentsChildBase | undefined {
-    if (!/^(#\/components\/)/.test(ref)) return
-    const [model, typeName] = ref.replace(RegExp.$1, '').split('/') as [keyof ComponentsObject, string]
-    return this.parent[model][typeName]
+    if (!ref.startsWith(this.baseRef)) return
+    const [moduleName, typeName] = ref.replace(this.baseRef, '').split('/') as [keyof ComponentsObject, string]
+    const typeItem = this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.typeName === typeName)
+    return typeItem?.typeInfo
+  }
+
+  pushRef(ref?: string) {
+    if (!ref) return
+    const extend = this.findRefType(ref)
+    if (extend) this.refValues.push(extend)
   }
 
   protected formatSchema([keyName, keyValue]: [string, SchemasData], requiredNames: string[] = []): TypeItem {
