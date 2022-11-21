@@ -15,7 +15,7 @@ export interface ComponentsChildBase {
   attrs: Record<string, any>
 
   // // ref 引用值
-  refValues: ComponentsChildBase[]
+  refs: ComponentsChildBase[]
 
   // TODO 翻译处理名字，添加回调函处理名字
   typeName: string

@@ -1,4 +1,3 @@
-import TypeItem from '../typeItem'
 import Components from '../components'
 import ComponentsBase from './base'
 import type { ComponentsChildBase } from '../type'
@@ -42,46 +41,8 @@ export default class Schemas extends ComponentsBase implements ComponentsChildBa
       this.pushRef(this.$ref)
     } else {
       for (const keyItem of Object.entries(this.properties)) {
-        this.typeItems.push(this.formatSchema(keyItem, this.required)) // = this.start(this.properties, this.required)
+        this.typeItems.push(this.formatSchema(keyItem, this.required))
       }
     }
   }
-
-  // private format([keyName, keyValue]: [string, SchemasData], requiredNames: string[] = []): TypeItemOption {
-  //   const {
-  //     example,
-  //     nullable,
-  //     required,
-  //     properties,
-  //     deprecated,
-  //     description,
-  //     externalDocs,
-  //     enum: _enum = []
-  //   } = keyValue as BaseSchemaObject
-
-  //   const { items, type, $ref } = keyValue as SchemaItemsObject
-
-  //   // items 泛型入参，最多只有一个泛型入参
-  //   // openapi3 没有了泛型形参定义
-  //   const { $ref: itemRef } = items ?? {}
-  //   const genericsItem = itemRef
-  //     ? this.getType(undefined, itemRef)
-  //     : this.format([`${keyName}Items`, items as SchemasData])
-
-  //   const enumTypes = _enum.join('|') ?? undefined
-  //   const children = !!properties ? Object.entries(properties).map(i => this.format(i, required)) : undefined
-  //   return {
-  //     example,
-  //     nullable,
-  //     children,
-  //     enumTypes,
-  //     deprecated,
-  //     description,
-  //     externalDocs,
-  //     name: keyName,
-  //     genericsItem,
-  //     type: this.getType(type, $ref),
-  //     required: requiredNames.includes(keyName)
-  //   }
-  // }
 }

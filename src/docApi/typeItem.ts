@@ -1,4 +1,5 @@
 import { OpenAPIV3 } from 'openapi-types'
+import { TypeInfoItem } from './components'
 import { ComponentsChildBase, GenericsItems } from './type'
 
 export interface TypeItemOption {
@@ -6,7 +7,7 @@ export interface TypeItemOption {
   type?: string | ComponentsChildBase
 
   /** 引用其它类型 */
-  $ref?: string
+  // ref?: string
   /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
   genericsItem?: string | ComponentsChildBase | TypeItem
 
@@ -32,31 +33,9 @@ export interface TypeItemOption {
   /** 可以为空 */
   nullable?: boolean
 }
-
-// type TypeItemKey = keyof TypeItemOption
-
-// class TypeItemOps {
-//   constructor(option: any) {
-//     for (const [key, value] of Object.entries(option)) {
-//       if (value !== undefined) this[key as keyof TypeItemOps] = value
-//     }
-//   }
-// }
-
-// class TypeItemOps {
-
-//   constructor(option: TypeItemOption) {
-//     for (const [key, value] of Object.entries(option)) {
-//       const _key = key as any
-//       if (value !== undefined) this[_key as keyof TypeItemOps] = value
-//     }
-//   }
-// }
-
 export default class TypeItem implements TypeItemOption {
   name!: string
   type?: string | ComponentsChildBase //
-  $ref?: string
   example?: string
   default?: string
   required?: boolean
@@ -70,11 +49,10 @@ export default class TypeItem implements TypeItemOption {
   externalDocs?: OpenAPIV3.ExternalDocumentationObject
 
   constructor(option: TypeItemOption) {
-    const { name, type, $ref, example, default: def, required } = option
+    const { name, type, example, default: def, required } = option
     const { nullable, children, enumTypes, paramType, deprecated, description, genericsItem, externalDocs } = option
     this.name = name
     this.type = type
-    this.$ref = $ref
     this.default = def
     this.example = example
     this.required = required
@@ -86,8 +64,5 @@ export default class TypeItem implements TypeItemOption {
     this.description = description
     this.genericsItem = genericsItem
     this.externalDocs = externalDocs
-    // for (const [key, value] of Object.entries(option)) {
-    //   if (value !== undefined) this[key as keyof TypeItem] = value
-    // }
   }
 }

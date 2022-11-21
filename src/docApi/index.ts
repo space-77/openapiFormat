@@ -1,13 +1,9 @@
-import fs from 'fs'
-import { HttpMethods, httpMethods } from '../common'
-// import FunInfo from './funInfo'
 import Components from './components'
 import type { OpenAPIV3 } from 'openapi-types'
-import { firstToUpper, getGenericsType, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
-// import isKeyword from 'is-es2016-keyword'
 import { OperationObject } from '../types/openapi'
 import { ComponentsChildBase } from './type'
-import path from 'path'
+import { HttpMethods, httpMethods } from '../common'
+import { firstToUpper, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -35,7 +31,7 @@ export default class DocApi {
   // 相同的路径
   private samePath = ''
   private pathItems: PathItem[] = []
-  components!: Components
+  typeGroup!: Components
   get funcGroupList() {
     const funcGroupList: FuncGroupList[] = []
     const { pathItems, json } = this
@@ -64,8 +60,7 @@ export default class DocApi {
   private formatTypes() {
     // 1、梳理 收集 类型以及类型索引
     // 2、整理 类型数据
-    // if (!this.json.components) return
-    this.components = new Components(this.json, this.pathItems)
+    this.typeGroup = new Components(this.json, this.pathItems)
   }
 
   private formatFuns() {

@@ -1,12 +1,12 @@
 import { PathItem } from './index'
-import Custom, { CustomObject } from './components/custom'
 import Schemas from './components/schemas'
 import Responses from './components/Responses'
 import Parameters from './components/parameters'
 import RequestBodies from './components/requestBodies'
-import { ComponentsChildBase } from './type'
-import type { Document, ResponseObject, OperationObject, ParameterObject } from '../types/openapi'
 import { firstToUpper } from '../common/utils'
+import { ComponentsChildBase } from './type'
+import Custom, { CustomObject } from './components/custom'
+import type { Document, ResponseObject } from '../types/openapi'
 
 export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
 export type TypeInfoItem = { typeName: string; moduleName: ModuleName; typeInfo: ComponentsChildBase }

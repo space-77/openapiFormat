@@ -7,9 +7,9 @@ import {
   ParameterObject
 } from '../../types/openapi'
 import Components from '../components'
+import { Schema } from './parameters'
 import { ComponentsChildBase } from '../type'
 import TypeItem, { TypeItemOption } from '../typeItem'
-import { Schema } from './parameters'
 
 export default class ComponentsBase {
   baseRef = '#/components/'
@@ -18,12 +18,12 @@ export default class ComponentsBase {
   typeItems: TypeItem[] = []
   deprecated?: boolean
   description?: string
-  refValues: ComponentsChildBase[] = []
+  refs: ComponentsChildBase[] = []
   attrs: Record<string, any> = {} // 自定义属性
 
   get isEmpty() {
-    const { typeItems, refValues } = this
-    return refValues.every(i => i.isEmpty) && typeItems.length === 0
+    const { typeItems, refs } = this
+    return refs.every(i => i.isEmpty) && typeItems.length === 0
   }
 
   constructor(protected parent: Components, public name: string) {
@@ -33,8 +33,8 @@ export default class ComponentsBase {
   getType(type?: SchemaObjectType, ref?: string): TypeItemOption['type'] {
     if (ref) return this.findRefType(ref)
     if (!type) return 'any'
-    if (type === 'integer') return 'number'
     if (type === 'array') return 'Array'
+    if (type === 'integer') return 'number'
     return type
   }
 
@@ -48,11 +48,10 @@ export default class ComponentsBase {
   pushRef(ref?: string) {
     if (!ref) return
     const extend = this.findRefType(ref)
-    if (extend) this.refValues.push(extend)
+    if (extend) this.refs.push(extend)
   }
 
   protected formatSchema([keyName, keyValue]: [string, SchemasData], requiredNames: string[] = []): TypeItem {
-    // console.log(keyName, keyValue)
     const {
       example,
       nullable,
@@ -78,10 +77,6 @@ export default class ComponentsBase {
       genericsItem = this.formatSchema([`${keyName}Items`, items])
     }
 
-    // const enumTypes = _enum.join('|') ?? undefined
-    // console.log({ keyName, genericsItem, enumTypes })
-
-    // console.log({ enumTypes })
     const children = !!properties ? Object.entries(properties).map(i => this.formatSchema(i, required)) : undefined
     return new TypeItem({
       example,
@@ -98,7 +93,7 @@ export default class ComponentsBase {
     })
   }
 
-  protected formatParameters(data: ParameterObject): TypeItemOption {
+  protected formatParameters(data: ParameterObject) {
     const { name, deprecated, schema, required, description, example } = data
     const { type: defType, items, $ref } = schema as SchemaItemsObject
 
@@ -114,6 +109,16 @@ export default class ComponentsBase {
     const paramType = data?.in as TypeItemOption['paramType']
     const enumTypes = (schema as Schema)?.enum
 
-    return { name, type, paramType, required, example, enumTypes, description, deprecated, genericsItem }
+    return new TypeItem({
+      name,
+      type,
+      paramType,
+      required,
+      example,
+      enumTypes,
+      description,
+      deprecated,
+      genericsItem
+    })
   }
 }

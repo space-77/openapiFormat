@@ -15,7 +15,6 @@ import type {
 export default class RequestBodies extends ComponentsBase implements ComponentsChildBase {
   required?: boolean
   contentType?: string
-
   externalDocs?: ExternalDocumentationObject
   additionalProperties?: boolean | ReferenceObject | SchemaObject
 
@@ -53,9 +52,9 @@ export default class RequestBodies extends ComponentsBase implements ComponentsC
       if (!properties) return
       const schemaList = Object.entries(properties)
       for (const keyValue of schemaList) {
-        const item = this.formatSchema(keyValue)
-        item.paramType = 'body'
-        this.typeItems.push(item)
+        const typeItem = this.formatSchema(keyValue)
+        typeItem.paramType = 'body'
+        this.typeItems.push(typeItem)
       }
     }
   }

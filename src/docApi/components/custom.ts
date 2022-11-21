@@ -7,8 +7,8 @@ import type { ParameterObject, ExternalDocumentationObject } from '../../types/o
 export type CustomObject = Omit<ParameterObject, 'in'>
 
 export default class Custom extends ComponentsBase implements ComponentsChildBase {
-  additionalProperties: any
   externalDocs?: ExternalDocumentationObject
+  additionalProperties: any
 
   constructor(parent: Components, public name: string, private datas: CustomObject[]) {
     super(parent, name)
@@ -16,7 +16,7 @@ export default class Custom extends ComponentsBase implements ComponentsChildBas
 
   init = () => {
     for (const keyItem of this.datas) {
-      this.typeItems.push(new TypeItem(this.formatParameters(keyItem as ParameterObject)))
+      this.typeItems.push(this.formatParameters(keyItem as ParameterObject))
     }
   }
 }
