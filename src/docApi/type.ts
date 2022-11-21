@@ -11,6 +11,9 @@ export interface ComponentsChildBase {
   name: string
   title?: string
 
+  // 自定义属性
+  attrs: Record<string, any>
+
   // // ref 引用值
   refValues: ComponentsChildBase[]
 

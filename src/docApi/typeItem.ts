@@ -43,7 +43,6 @@ export interface TypeItemOption {
 //   }
 // }
 
-
 // class TypeItemOps {
 
 //   constructor(option: TypeItemOption) {
@@ -54,10 +53,9 @@ export interface TypeItemOption {
 //   }
 // }
 
-
 export default class TypeItem implements TypeItemOption {
   name!: string
-  type?: string | ComponentsChildBase // 
+  type?: string | ComponentsChildBase //
   $ref?: string
   example?: string
   default?: string

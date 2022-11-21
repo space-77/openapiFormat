@@ -53,58 +53,13 @@ export default class DocApi {
     }
     return funcGroupList
   }
-  // apiFunInfos: FunInfo[] = []
 
-  constructor(private json: OpenAPIV3.Document) {
+  constructor(public json: OpenAPIV3.Document) {
     // 1、先收集数据
     // 2、再整理数据
     this.formatFuns()
     this.formatTypes()
   }
-
-  // private buildTsFile() {
-  //   let content = 'class Api {'
-  //   for (const itemInfo of this.pathItems) {
-  //     const { name, item, parameterType, requestBodyType, responseType } = itemInfo
-  //     const { deprecated, description } = item
-  //     const descriptionStr = `
-  // /**${deprecated ? '\n * @deprecated' : ''}
-  //  * @description ${description || ''}
-  //  */\n`
-  //     const paramsType = `params: ${parameterType?.name}`
-  //     content += `\n ${descriptionStr} ${name}(${paramsType}): ${responseType?.name}{\n}\n`
-  //   }
-  //   content += '}'
-
-  //   fs.writeFileSync(path.join(__dirname, '../../mock/funApi.ts'), content)
-  // }
-
-  // private buildTdDFile() {
-  //   let content = ''
-  //   for (const typeInfo of this.components.typeList) {
-  //     const [typeName, { typeItems, description, refValues }] = typeInfo
-  //     // console.log(typeInfo)
-  //     content += `interface ${typeName} ${refValues.length > 0 ? ` extends ${refValues.map(i => i.typeName).join(',')}` : ''} {\n`
-  //     // const {  } = typeItems
-  //     typeItems.sort((a, b) => a.name.length - b.name.length)
-  //     for (const typeItem of typeItems) {
-  //       const { name, type, example, enumTypes, required, genericsItem } = typeItem
-  //       const typeValue = typeof type === 'string' ? type : type?.typeName
-
-  //       const genericsType = getGenericsType(genericsItem, enumTypes)
-
-  //       content += `${name.replace(/-/g, '_')}${required ? '' : '?'}:${typeValue}${genericsType}\n`
-  //     }
-  //     content += '}\n'
-  //   }
-
-  //   fs.writeFileSync(path.join(__dirname, '../../mock/index.d.ts'), content)
-  // }
-
-  // public build() {
-  //   // this.buildTsFile()
-  //   this.buildTdDFile()
-  // }
 
   private formatTypes() {
     // 1、梳理 收集 类型以及类型索引

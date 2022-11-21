@@ -1,13 +1,14 @@
 import { PathItem } from './index'
+import Custom, { CustomObject } from './components/custom'
 import Schemas from './components/schemas'
 import Responses from './components/Responses'
 import Parameters from './components/parameters'
 import RequestBodies from './components/requestBodies'
 import { ComponentsChildBase } from './type'
-import type { Document, ResponseObject, OperationObject } from '../types/openapi'
+import type { Document, ResponseObject, OperationObject, ParameterObject } from '../types/openapi'
 import { firstToUpper } from '../common/utils'
 
-export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies'
+export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
 export type TypeInfoItem = { typeName: string; moduleName: ModuleName; typeInfo: ComponentsChildBase }
 
 export default class Components {
@@ -111,19 +112,11 @@ export default class Components {
     this.typeInfoList.forEach(i => {
       i.typeInfo.init()
     })
-    // Object.values(this.schemas).forEach(obj => {
-    //   obj.init()
-    // })
+  }
 
-    // Object.values(this.parameters).forEach(obj => {
-    //   obj.init()
-    // })
-
-    // Object.values(this.responses).forEach(obj => {
-    //   obj.init()
-    // })
-    // Object.values(this.requestBodies).forEach(obj => {
-    //   obj.init()
-    // })
+  addCustomType(name: string, types: CustomObject[]) {
+    const typeInfo = new Custom(this, name, types)
+    this.pushTypeItem('custom', typeInfo)
+    return typeInfo
   }
 }

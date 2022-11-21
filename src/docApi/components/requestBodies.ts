@@ -49,7 +49,9 @@ export default class RequestBodies extends ComponentsBase implements ComponentsC
       // 引用其它类型
       this.pushRef($ref)
     } else {
-      const schemaList = Object.entries(schema as SchemaObject)
+      const { properties } = schema as SchemaObject
+      if (!properties) return
+      const schemaList = Object.entries(properties)
       for (const keyValue of schemaList) {
         const item = this.formatSchema(keyValue)
         item.paramType = 'body'

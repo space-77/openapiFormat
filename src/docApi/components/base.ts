@@ -3,11 +3,13 @@ import {
   BaseSchemaObject,
   ComponentsObject,
   SchemaItemsObject,
-  SchemaObjectType
+  SchemaObjectType,
+  ParameterObject
 } from '../../types/openapi'
 import Components from '../components'
 import { ComponentsChildBase } from '../type'
 import TypeItem, { TypeItemOption } from '../typeItem'
+import { Schema } from './parameters'
 
 export default class ComponentsBase {
   baseRef = '#/components/'
@@ -17,6 +19,7 @@ export default class ComponentsBase {
   deprecated?: boolean
   description?: string
   refValues: ComponentsChildBase[] = []
+  attrs: Record<string, any> = {} // 自定义属性
 
   get isEmpty() {
     const { typeItems, refValues } = this
@@ -38,7 +41,7 @@ export default class ComponentsBase {
   findRefType(ref: string): ComponentsChildBase | undefined {
     if (!ref.startsWith(this.baseRef)) return
     const [moduleName, typeName] = ref.replace(this.baseRef, '').split('/') as [keyof ComponentsObject, string]
-    const typeItem = this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.typeName === typeName)
+    const typeItem = this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.typeInfo.name === typeName)
     return typeItem?.typeInfo
   }
 
@@ -93,5 +96,24 @@ export default class ComponentsBase {
       type: this.getType(type, $ref),
       required: requiredNames.includes(keyName)
     })
+  }
+
+  protected formatParameters(data: ParameterObject): TypeItemOption {
+    const { name, deprecated, schema, required, description, example } = data
+    const { type: defType, items, $ref } = schema as SchemaItemsObject
+
+    let genericsItem: TypeItemOption['genericsItem']
+    if ($ref) {
+      genericsItem = this.getType(defType, $ref)
+    } else if (items) {
+      genericsItem = this.formatSchema([`${name}Items`, items])
+    }
+
+    const type = this.getType(defType, $ref)
+
+    const paramType = data?.in as TypeItemOption['paramType']
+    const enumTypes = (schema as Schema)?.enum
+
+    return { name, type, paramType, required, example, enumTypes, description, deprecated, genericsItem }
   }
 }
