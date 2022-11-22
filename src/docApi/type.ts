@@ -1,5 +1,4 @@
 import TypeItem from './typeItem'
-import type { ExternalDocumentationObject, ReferenceObject, SchemaObject } from '../types/openapi'
 import ComponentsBase from './components/base'
 
 export type StaticImplements<I extends new (...args: any[]) => any, C extends I> = InstanceType<I>

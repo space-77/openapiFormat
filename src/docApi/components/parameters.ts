@@ -7,7 +7,6 @@ export type ParametersData = ReferenceObject | ParameterObject
 
 export default class Parameters extends ComponentsBase {
   additionalProperties: any
-  externalDocs?: ExternalDocumentationObject
 
   constructor(parent: Components, public name: string, private datas: ParametersData[]) {
     super(parent, name)

@@ -16,7 +16,6 @@ import { firstToUpper } from 'src/common/utils'
 export default class RequestBodies extends ComponentsBase {
   required?: boolean
   contentType?: string
-  externalDocs?: ExternalDocumentationObject
   additionalProperties?: boolean | ReferenceObject | SchemaObject
 
   constructor(parent: Components, public name: string, private data: BodyObject | ResponseData) {

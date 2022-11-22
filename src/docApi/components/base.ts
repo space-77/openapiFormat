@@ -7,15 +7,16 @@ import {
   SchemaObject,
   Properties,
   ReferenceObject,
-  ArraySchemaObject
+  ArraySchemaObject,
+  ExternalDocumentationObject
 } from '../../types/openapi'
-import Components from '../components'
-import { Schema } from './parameters'
 // import { ComponentsChildBase } from '../type'
-import TypeItem, { TypeItemOption } from '../typeItem'
 import Custom from './custom'
 import Schemas from './schemas'
+import { Schema } from './parameters'
+import Components from '../components'
 import { firstToUpper } from 'src/common/utils'
+import TypeItem, { TypeItemOption } from '../typeItem'
 
 // FIXME 类型继承，可能会存在这种怪异类型
 // interface TypeName extends Array<number> {
@@ -29,15 +30,16 @@ export default abstract class ComponentsBase {
   typeItems: TypeItem[] = []
   deprecated?: boolean
   description?: string
-  refs: ComponentsBase[] = []
-  attrs: Record<string, any> = {} // 自定义属性
-
   // 继承类型的泛型入参 interface TypeName extends Array<number> {}
-  genericsItem?: ComponentsBase
+  refs: { typeInfo: ComponentsBase; genericsItem?: ComponentsBase }[] = []
+  attrs: Record<string, any> = {} // 自定义属性
+  /** 外部链接描叙 */
+  externalDocs?: ExternalDocumentationObject
+  resConentType?: string
 
   get isEmpty(): boolean {
     const { typeItems, refs } = this
-    return refs.every(i => i.isEmpty) && typeItems.length === 0
+    return refs.every(i => i.typeInfo.isEmpty && i.genericsItem?.typeName !== 'Array') && typeItems.length === 0
   }
 
   constructor(protected parent: Components, public name: string) {
@@ -61,45 +63,36 @@ export default abstract class ComponentsBase {
     return typeItem?.typeInfo
   }
 
-  pushRef(ref?: string) {
+  pushRef(ref?: string, genericsItem?: ComponentsBase) {
     if (!ref) return
-    const extend = this.findRefType(ref)
-    if (extend) this.refs.push(extend)
+    const typeInfo = this.findRefType(ref)
+    if (typeInfo) this.refs.push({ typeInfo, genericsItem })
   }
 
   createGenericsTypeinfo(items: ReferenceObject | SchemaObject, name: string) {
     // 继承泛型逻辑
-    const typeItem = new Custom(this.parent, 'Array', []) // 创建 ts 原生 Array【用于类型继承，不会生成类型】
 
     const { $ref } = items as ReferenceObject
 
     if ($ref) {
-      typeItem.genericsItem = this.findRefType($ref)
+      this.pushRef($ref)
     } else {
       // 创建泛型类型
+      const typeInfo = new Custom(this.parent, 'Array', []) // 创建 ts 原生 Array【用于类型继承，不会生成类型】
       const tTypeItem = new Schemas(this.parent, firstToUpper(`${name}T`), items as SchemaObject)
       tTypeItem.init()
       this.parent.pushTypeItem('schemas', tTypeItem)
-      typeItem.genericsItem = tTypeItem
+      this.refs.push({ typeInfo, genericsItem: tTypeItem })
     }
-    this.refs.push(typeItem)
   }
 
-  protected createSchemaTypeItem(schemaInfo: SchemaObject): TypeItem[] {
+  protected createSchemaTypeItem(schemaInfo: SchemaObject, name: string): TypeItem[] {
     const { items } = schemaInfo as ArraySchemaObject
     const { properties, additionalProperties, required, type } = schemaInfo
 
     // 泛型逻辑
-    let genericsItem: TypeItemOption['genericsItem'] | undefined
     if (items) {
-      const { $ref } = items as ReferenceObject
-      if ($ref) {
-        // this.pushRef($ref)
-        const typeInfo = this.findRefType($ref)
-      } else {
-        const {} = items as SchemaObject
-      }
-      return []
+      this.createGenericsTypeinfo(items, name)
     }
 
     if (!properties) return []
@@ -151,10 +144,10 @@ export default abstract class ComponentsBase {
       genericsItem = this.getType(undefined, itemRef)
     } else if (items) {
       // 泛型 为 schema 类型
-      genericsItem = this.formatSchema([`${keyName}Items`, items])
+      genericsItem = this.formatSchema([`${keyName}Items`, items], required)
     }
 
-    const children = !!properties ? this.createSchemaTypeItem(properties) : undefined
+    const children = !!properties ? this.createSchemaTypeItem(properties, keyName) : undefined
     return new TypeItem({
       example,
       nullable,

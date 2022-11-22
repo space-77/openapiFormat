@@ -1,8 +1,7 @@
-import Custom from './custom'
 import Components from '../components'
 import ComponentsBase from './base'
-import type { SchemasData, SchemaObject, ReferenceObject, ArraySchemaObject } from '../../types/openapi'
 import { firstToUpper } from 'src/common/utils'
+import type { SchemasData, SchemaObject, ReferenceObject, ArraySchemaObject } from '../../types/openapi'
 
 export default class Schemas extends ComponentsBase {
   $ref?: string
@@ -39,7 +38,7 @@ export default class Schemas extends ComponentsBase {
       // 引用其它类型
       this.pushRef($ref)
     } else {
-      this.typeItems.push(...this.createSchemaTypeItem(data as SchemaObject))
+      this.typeItems.push(...this.createSchemaTypeItem(data as SchemaObject, this.name))
     }
   }
 }

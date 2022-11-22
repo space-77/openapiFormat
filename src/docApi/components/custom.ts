@@ -5,8 +5,6 @@ import type { ParameterObject, ExternalDocumentationObject } from '../../types/o
 export type CustomObject = Omit<ParameterObject, 'in'>
 
 export default class Custom extends ComponentsBase {
-  externalDocs?: ExternalDocumentationObject
-
   constructor(parent: Components, public name: string, private datas: CustomObject[]) {
     super(parent, name)
   }
