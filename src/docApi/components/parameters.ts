@@ -1,12 +1,11 @@
 import Components from '../components'
 import ComponentsBase from './base'
-import type { ComponentsChildBase } from '../type'
 import type { SchemaObject, ParameterObject, ReferenceObject, ExternalDocumentationObject } from '../../types/openapi'
 
 export type Schema = ReferenceObject & SchemaObject
 export type ParametersData = ReferenceObject | ParameterObject
 
-export default class Parameters extends ComponentsBase implements ComponentsChildBase {
+export default class Parameters extends ComponentsBase {
   additionalProperties: any
   externalDocs?: ExternalDocumentationObject
 

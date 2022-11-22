@@ -1,5 +1,6 @@
 import TypeItem from './typeItem'
 import type { ExternalDocumentationObject, ReferenceObject, SchemaObject } from '../types/openapi'
+import ComponentsBase from './components/base'
 
 export type StaticImplements<I extends new (...args: any[]) => any, C extends I> = InstanceType<I>
 export interface GenericsItems {
@@ -15,21 +16,13 @@ export interface ComponentsChildBase {
   attrs: Record<string, any>
 
   // // ref 引用值
-  refs: ComponentsChildBase[]
+  refs: ComponentsBase[]
 
   // TODO 翻译处理名字，添加回调函处理名字
   typeName: string
 
   isEmpty: boolean
   typeItems: TypeItem[]
-  // extendList: ComponentsChildBase[]
-  deprecated?: boolean
-  description?: string
-  externalDocs?: ExternalDocumentationObject
-  resConentType?: string
-
-  // TODO Record
-  additionalProperties?: boolean | ReferenceObject | SchemaObject
 
   init: () => void
 

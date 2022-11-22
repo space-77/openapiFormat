@@ -1,15 +1,14 @@
 import { OpenAPIV3 } from 'openapi-types'
-import { TypeInfoItem } from './components'
-import { ComponentsChildBase, GenericsItems } from './type'
+import ComponentsBase from './components/base'
 
 export interface TypeItemOption {
   name: string
-  type?: string | ComponentsChildBase
+  type?: string | ComponentsBase
 
   /** 引用其它类型 */
   // ref?: string
   /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
-  genericsItem?: string | ComponentsChildBase | TypeItem
+  genericsItem?: string | ComponentsBase | TypeItem
 
   // 参数的位置，
   paramType?: 'query' | 'header' | 'path' | 'body'
@@ -35,7 +34,7 @@ export interface TypeItemOption {
 }
 export default class TypeItem implements TypeItemOption {
   name!: string
-  type?: string | ComponentsChildBase //
+  type?: string | ComponentsBase //
   example?: string
   default?: string
   required?: boolean
@@ -45,7 +44,7 @@ export default class TypeItem implements TypeItemOption {
   paramType?: 'query' | 'header' | 'path' | 'body'
   deprecated?: boolean
   description?: string
-  genericsItem?: string | ComponentsChildBase | TypeItem
+  genericsItem?: string | ComponentsBase | TypeItem
   externalDocs?: OpenAPIV3.ExternalDocumentationObject
 
   constructor(option: TypeItemOption) {

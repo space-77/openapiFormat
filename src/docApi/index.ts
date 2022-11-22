@@ -1,9 +1,9 @@
 import Components from './components'
 import type { OpenAPIV3 } from 'openapi-types'
 import { OperationObject } from '../types/openapi'
-import { ComponentsChildBase } from './type'
 import { HttpMethods, httpMethods } from '../common'
 import { firstToUpper, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
+import ComponentsBase from './components/base'
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -16,9 +16,9 @@ export interface PathItem {
   moduleName: string
   paramsName: string
   responseName: string
-  responseType?: ComponentsChildBase
-  parameterType?: ComponentsChildBase
-  requestBodyType?: ComponentsChildBase
+  responseType?: ComponentsBase
+  parameterType?: ComponentsBase
+  requestBodyType?: ComponentsBase
 }
 
 export type FuncGroupList = {

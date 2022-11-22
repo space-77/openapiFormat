@@ -1,14 +1,11 @@
-import TypeItem from '../typeItem'
 import Components from '../components'
 import ComponentsBase from './base'
-import type { ComponentsChildBase } from '../type'
 import type { ParameterObject, ExternalDocumentationObject } from '../../types/openapi'
 
 export type CustomObject = Omit<ParameterObject, 'in'>
 
-export default class Custom extends ComponentsBase implements ComponentsChildBase {
+export default class Custom extends ComponentsBase {
   externalDocs?: ExternalDocumentationObject
-  additionalProperties: any
 
   constructor(parent: Components, public name: string, private datas: CustomObject[]) {
     super(parent, name)

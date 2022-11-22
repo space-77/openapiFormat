@@ -1,5 +1,5 @@
 import balanced from 'balanced-match'
-import { ComponentsChildBase } from '../docApi/type'
+import ComponentsBase from '../docApi/components/base'
 import TypeItem, { TypeItemOption } from '../docApi/typeItem'
 
 /**
@@ -110,6 +110,6 @@ export function getGenericsType(generics: TypeItemOption['genericsItem'], enumTy
     return getGenerics4TypeItem(generics)
   }
   // 泛型 为 引用类型
-  const { typeName } = generics as ComponentsChildBase
+  const { typeName } = generics as ComponentsBase
   return `<${typeName}>`
 }

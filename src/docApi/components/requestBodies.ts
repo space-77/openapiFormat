@@ -1,6 +1,5 @@
 import Components from '../components'
 import ComponentsBase from './base'
-import type { ComponentsChildBase } from '../type'
 import type {
   BodyObject,
   ResponseData,
@@ -9,10 +8,12 @@ import type {
   MediaTypeObject,
   ReferenceObject,
   RequestBodyObject,
-  ExternalDocumentationObject
+  ExternalDocumentationObject,
+  ArraySchemaObject
 } from '../../types/openapi'
+import { firstToUpper } from 'src/common/utils'
 
-export default class RequestBodies extends ComponentsBase implements ComponentsChildBase {
+export default class RequestBodies extends ComponentsBase {
   required?: boolean
   contentType?: string
   externalDocs?: ExternalDocumentationObject
@@ -48,6 +49,13 @@ export default class RequestBodies extends ComponentsBase implements ComponentsC
       // 引用其它类型
       this.pushRef($ref)
     } else {
+      
+      // 处理 泛型的可能
+      const {items, type} = schema as Partial<ArraySchemaObject>
+      if (items && type) {
+        this.createGenericsTypeinfo(items, firstToUpper(this.name))
+      }
+
       const { properties } = schema as SchemaObject
       if (!properties) return
       const schemaList = Object.entries(properties)

@@ -4,12 +4,12 @@ import Responses from './components/Responses'
 import Parameters from './components/parameters'
 import RequestBodies from './components/requestBodies'
 import { firstToUpper } from '../common/utils'
-import { ComponentsChildBase } from './type'
+import ComponentsBase from './components/base'
 import Custom, { CustomObject } from './components/custom'
 import type { Document, ResponseObject } from '../types/openapi'
 
 export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
-export type TypeInfoItem = { typeName: string; moduleName: ModuleName; typeInfo: ComponentsChildBase }
+export type TypeInfoItem = { typeName: string; moduleName: ModuleName; typeInfo: ComponentsBase }
 
 export default class Components {
   // components!: OpenAPIV3.ComponentsObject
@@ -19,11 +19,11 @@ export default class Components {
   // requestBodies: Record<string, RequestBodies> = {}
 
   // // TODO 一下数据没处理
-  // links: Record<string, ComponentsChildBase> = {}
-  // headers: Record<string, ComponentsChildBase> = {}
-  // examples: Record<string, ComponentsChildBase> = {}
-  // callbacks: Record<string, ComponentsChildBase> = {}
-  // securitySchemes: Record<string, ComponentsChildBase> = {}
+  // links: Record<string, ComponentsBase> = {}
+  // headers: Record<string, ComponentsBase> = {}
+  // examples: Record<string, ComponentsBase> = {}
+  // callbacks: Record<string, ComponentsBase> = {}
+  // securitySchemes: Record<string, ComponentsBase> = {}
   typeInfoList: TypeInfoItem[] = []
 
   constructor(private baseDate: Document, private pathItems: PathItem[]) {
@@ -45,7 +45,7 @@ export default class Components {
     return name
   }
 
-  pushTypeItem(moduleName: ModuleName, typeInfo: ComponentsChildBase) {
+  pushTypeItem(moduleName: ModuleName, typeInfo: ComponentsBase) {
     this.typeInfoList.push({ typeName: typeInfo.typeName, moduleName, typeInfo })
   }
 

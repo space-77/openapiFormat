@@ -9,6 +9,7 @@ export type ParameterObject = OpenAPIV3.ParameterObject
 export type MediaTypeObject = OpenAPIV3.MediaTypeObject
 export type BaseSchemaObject = OpenAPIV3.BaseSchemaObject
 export type ComponentsObject = OpenAPIV3.ComponentsObject
+export type ArraySchemaObject = OpenAPIV3.ArraySchemaObject
 export type RequestBodyObject = OpenAPIV3.RequestBodyObject
 export type ArraySchemaObjectType = OpenAPIV3.ArraySchemaObjectType
 export type NonArraySchemaObjectType = OpenAPIV3.NonArraySchemaObjectType
@@ -22,3 +23,5 @@ export type SchemasData = ReferenceObject | SchemaObject
 
 export type BodyObject = ReferenceObject | RequestBodyObject
 export type ResponseData = ReferenceObject | ResponseObject
+
+export type Properties = SchemasData
