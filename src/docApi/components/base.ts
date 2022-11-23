@@ -10,12 +10,10 @@ import {
   ArraySchemaObject,
   ExternalDocumentationObject
 } from '../../types/openapi'
-// import { ComponentsChildBase } from '../type'
-import Custom from './custom'
 import Schemas from './schemas'
 import { Schema } from './parameters'
 import Components from '../components'
-import { firstToUpper } from 'src/common/utils'
+import { firstToUpper } from '../../common/utils'
 import TypeItem, { TypeItemOption } from '../typeItem'
 
 // FIXME 类型继承，可能会存在这种怪异类型
@@ -78,7 +76,7 @@ export default abstract class ComponentsBase {
       this.pushRef($ref)
     } else {
       // 创建泛型类型
-      const typeInfo = new Custom(this.parent, 'Array', []) // 创建 ts 原生 Array【用于类型继承，不会生成类型】
+      const typeInfo = new Schemas(this.parent, 'Array', items) // 创建 ts 原生 Array【用于类型继承，不会生成类型】
       const tTypeItem = new Schemas(this.parent, firstToUpper(`${name}T`), items as SchemaObject)
       tTypeItem.init()
       this.parent.pushTypeItem('schemas', tTypeItem)

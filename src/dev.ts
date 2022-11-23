@@ -1,4 +1,4 @@
-import OpenApi from './index'
+import docInit from './index'
 // import api from '../output'
 import axios from 'axios'
 import fs from 'fs'
@@ -16,7 +16,8 @@ import balanced from 'balanced-match'
 
 // https://generator3.swagger.io/index.html
 const url = 'https://generator3.swagger.io/openapi.json'
-const openapi = new OpenApi(url)
+// const openapi = new OpenApi(url)
+docInit(url)
 
 // openapi.start({})
 // openapi.

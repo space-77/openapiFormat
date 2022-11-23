@@ -11,7 +11,7 @@ import type {
   ExternalDocumentationObject,
   ArraySchemaObject
 } from '../../types/openapi'
-import { firstToUpper } from 'src/common/utils'
+import { firstToUpper } from '../../common/utils'
 
 export default class RequestBodies extends ComponentsBase {
   required?: boolean
