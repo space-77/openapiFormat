@@ -5,7 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import balanced from 'balanced-match'
 
-// https://openapi.apifox.cn/
+// openapi3 中文文档 https://www.cnblogs.com/yaohl0911/p/14567915.html
 
 // console.log(balanced("«", "»", "通用响应体«List«MyBatisDemo响应体»»"));
 
