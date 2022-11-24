@@ -4,7 +4,6 @@ import {
   SchemaObjectType,
   ParameterObject,
   SchemaObject,
-  Properties,
   ReferenceObject,
   ArraySchemaObject,
   ExternalDocumentationObject,
@@ -12,7 +11,6 @@ import {
   SchemasData
 } from '../../types/openapi'
 import Schemas, { SchemasOp } from './schemas'
-import { Schema } from './parameters'
 import Components, { ModuleName } from '../components'
 import { firstToUpper } from '../../common/utils'
 import TypeItem from '../typeItem'
@@ -21,6 +19,7 @@ import TypeItem from '../typeItem'
 // interface TypeName extends Array<number> {
 //   test: ''
 // }
+export type RefItem = { typeInfo: TypeInfoBase; genericsItem?: TypeInfoBase | string }
 
 const baseRef = '#/components/'
 export default abstract class TypeInfoBase {
@@ -31,7 +30,7 @@ export default abstract class TypeInfoBase {
   description?: string
   abstract moduleName: ModuleName
   // 继承类型的泛型入参 interface TypeName extends Array<number> {}
-  refs: { typeInfo: TypeInfoBase; genericsItem?: TypeInfoBase | string }[] = []
+  refs: RefItem[] = []
   attrs: Record<string, any> = {} // 自定义属性
   /** 外部链接描叙 */
   externalDocs?: ExternalDocumentationObject
@@ -71,7 +70,7 @@ export default abstract class TypeInfoBase {
     if (typeInfo) this.refs.push({ typeInfo, genericsItem })
   }
 
-  protected createGenericsTypeinfo(items: ReferenceObject | SchemaObject, name: string) {
+  protected createGenericsTypeinfo(items: ReferenceObject | SchemaObject, name: string): RefItem {
     // 继承泛型逻辑
 
     const { parent } = this
@@ -141,19 +140,23 @@ export default abstract class TypeInfoBase {
     const { type } = schema as NonArraySchemaObject
 
     const {
+      format,
       example,
       nullable,
-      properties,
+      properties = {},
       deprecated,
       description,
       externalDocs,
       enum: _enum = [],
-      required: childrenRequired
+      required: childrenRequired = []
     } = schema as BaseSchemaObject
 
-    const children = !!properties ? this.createSchemaTypeItem(properties, keyName) : undefined
+    const children = Object.entries(properties).map(([name, schema]) =>
+      this.createSchemaType(name, schema, childrenRequired.includes(name))
+    )
     return new TypeItem({
       ref: items ? this.createGenericsTypeinfo(items, keyName) : undefined,
+      format,
       example,
       nullable,
       children,

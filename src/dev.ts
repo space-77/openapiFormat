@@ -5,7 +5,8 @@ import fs from 'fs'
 import path from 'path'
 import balanced from 'balanced-match'
 
-// openapi3 中文文档 https://www.cnblogs.com/yaohl0911/p/14567915.html
+// openapi3 说明文档 https://www.cnblogs.com/yaohl0911/p/14567915.html
+// openapi3 中文文档 https://fishead.gitbook.io/openapi-specification-zhcn-translation/3.0.0.zhcn#jie-shao
 
 // console.log(balanced("«", "»", "通用响应体«List«MyBatisDemo响应体»»"));
 

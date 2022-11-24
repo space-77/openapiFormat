@@ -13,6 +13,9 @@ export interface TypeItemOption {
   paramType?: 'query' | 'header' | 'path' | 'body' | 'cookie' // 参数的位置
   deprecated?: boolean
   description?: string
+  minLength?: number
+  maxLength?: number
+  format?: string
   externalDocs?: OpenAPIV3.ExternalDocumentationObject /** 外部链接描叙 */
   ref?: { typeInfo: ComponentsBase; genericsItem?: ComponentsBase | string }
 }
@@ -28,6 +31,9 @@ export default class TypeItem {
   paramType?: TypeItemOption['paramType']
   deprecated?: boolean /** 是否弃用 */
   description?: string
+  minLength?: number
+  maxLength?: number
+  format?: string
   /** 泛型入参 */
   ref?: TypeItemOption['ref']
   // genericsItem?: string | ComponentsBase | TypeItem /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
@@ -35,10 +41,23 @@ export default class TypeItem {
 
   constructor(option: TypeItemOption) {
     const { name, type, example, default: def, required } = option
-    const { nullable, children, enumTypes, paramType, deprecated, description, ref, externalDocs } = option
+    const {
+      ref,
+      format,
+      nullable,
+      children,
+      enumTypes,
+      paramType,
+      deprecated,
+      description,
+      externalDocs,
+      maxLength,
+      minLength
+    } = option
+    this.ref = ref
     this.name = name
     this.type = type
-    this.ref = ref
+    this.format = format
     this.default = def
     this.example = example
     this.required = required
@@ -49,17 +68,24 @@ export default class TypeItem {
     this.deprecated = deprecated
     this.description = description
     this.externalDocs = externalDocs
+    this.minLength = minLength
+    this.maxLength = maxLength
   }
 
   getKeyValue() {
-    const { type, enumTypes = [], nullable, children = [], ref } = this
+    const { type, enumTypes = [], nullable, children = [], ref, format } = this
     const { typeInfo, genericsItem } = ref ?? {} // 泛型
 
     let content = ''
     if (enumTypes.length > 0) {
       content = enumTypes.map(i => `"${i}"`).join(' | ')
     } else if (typeof type === 'string') {
-      content = type
+      if (format === 'binary') {
+        // 使用文件 类型
+        content = 'File'
+      } else {
+        content = type
+      }
     } else if (type instanceof ComponentsBase) {
       content = type.typeName
     } else if (!nullable) {
