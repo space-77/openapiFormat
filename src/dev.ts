@@ -1,43 +1,77 @@
-import docInit from './index'
-// import api from '../output'
+// import docInit from './index'
+// // import api from '../output'
 import axios from 'axios'
-import fs from 'fs'
-import path from 'path'
-import balanced from 'balanced-match'
+import cheerio from 'cheerio'
+// import fs from 'fs'
+// import path from 'path'
+// import balanced from 'balanced-match'
 
-// openapi3 说明文档 https://www.cnblogs.com/yaohl0911/p/14567915.html
-// openapi3 中文文档 https://fishead.gitbook.io/openapi-specification-zhcn-translation/3.0.0.zhcn#jie-shao
+// // openapi3 说明文档 https://www.cnblogs.com/yaohl0911/p/14567915.html
+// // openapi3 中文文档 https://fishead.gitbook.io/openapi-specification-zhcn-translation/3.0.0.zhcn#jie-shao
 
-// console.log(balanced("«", "»", "通用响应体«List«MyBatisDemo响应体»»"));
+// // console.log(balanced("«", "»", "通用响应体«List«MyBatisDemo响应体»»"));
 
-// const str = '我#获取我一#特殊符号#获取我二#之间#获取我三#的内容'
-// const pattern = /#(.+?)#/g
-// const text = str.match(pattern) ?? ''
-// console.log(text.toString().replace(/(#)/g, ''))
+// // const str = '我#获取我一#特殊符号#获取我二#之间#获取我三#的内容'
+// // const pattern = /#(.+?)#/g
+// // const text = str.match(pattern) ?? ''
+// // console.log(text.toString().replace(/(#)/g, ''))
 
-// https://generator3.swagger.io/index.html
-const url = 'https://generator3.swagger.io/openapi.json'
-// const openapi = new OpenApi(url)
-docInit(url)
+// // https://generator3.swagger.io/index.html
+// const url = 'https://generator3.swagger.io/openapi.json'
+// // const openapi = new OpenApi(url)
+// docInit(url)
 
-// openapi.start({})
-// openapi.
+// // openapi.start({})
+// // openapi.
 
-// const isChinese = require('is-chinese')
+// // const isChinese = require('is-chinese')
 
-// console.log(isChinese('a中文'));
+// // console.log(isChinese('a中文'));
 
-// swagger 格式转 openapi
-// const converter = require('swagger2openapi')
+// // swagger 格式转 openapi
+// // const converter = require('swagger2openapi')
+// // ~(async () => {
+// //   try {
+// //     const url = 'http://114.115.202.183:8088/v2/api-docs'
+// //     const { data } = await axios.get(url)
+// //     converter.convertObj(data, { components: true }, function (err: any, options: any) {
+// //       if (err) return
+// //       fs.writeFileSync(path.join(__dirname, '../mock/swagger2openapi2.json'), JSON.stringify(options.openapi))
+// //     })
+// //   } catch (error) {
+// //     console.error(error)
+// //   }
+// // })()
+
+const { baiduTranslator, googleTranslator, youdaoTranslator, bingTranslator } = require('translators')
+
+bingTranslator('犯规。堆土机。下班。面具。玩具。圣诞节。集团。空间。接口', 'zh', 'en', {
+  // Foul. Stacker. Work. Mask. Toy. Christmas. Clique. Space. interface
+  if_use_cn_host: false
+}).then((value: string) => {
+  console.log(value)
+})
+
+const { youdao, baidu, google } = require('translation.js')
+
+youdao.translate('你').then((t: string) => {
+  // Foul.Earth-moving machine.after workMask.Toys.ChristmasGroup.Space.interface
+  // A foul...Earth-moving machine...after workThe mask...Toy...ChristmasGroup...Space...interface
+  console.log(t)
+})
+
 // ~(async () => {
-//   try {
-//     const url = 'http://114.115.202.183:8088/v2/api-docs'
-//     const { data } = await axios.get(url)
-//     converter.convertObj(data, { components: true }, function (err: any, options: any) {
-//       if (err) return
-//       fs.writeFileSync(path.join(__dirname, '../mock/swagger2openapi2.json'), JSON.stringify(options.openapi))
-//     })
-//   } catch (error) {
-//     console.error(error)
-//   }
+//   // https://translate.google.com/?hl=zh-CN&sl=zh-CN&tl=en&text=检、测、语、言&op=translate // google
+//   // https://translate.volcengine.com/translate?category=&glossary_list[]=ailab%2Ftechfirm&home_language=zh&source_language=detect&target_language=en&text=自、动、检、测
+//   // const { data } = await axios.get('https://fanyi.baidu.com/translate#zh/en/%E4%BD%A0%E3%80%82%E5%A5%BD%E3%80%82%E7%BF%BB%E3%80%82%E8%AF%91')
+//   const { data } = await axios.post('https://fanyi.baidu.com/v2transapi?from=zh&to=en')
+//   // console.log(data);
+//   // const $ = cheerio.load(data)
+//   // const achor = $('.ryNqvb')
+
+//   // console.log(achor.text())
+//   // achor.map((i, ele) => {
+//   //   // console.log(i, ele)
+//   //   console.log(ele.attribs);
+//   // })
 // })()
