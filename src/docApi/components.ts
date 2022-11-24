@@ -1,15 +1,15 @@
 import { PathItem } from './index'
-import Schemas from './components/schemas'
+import Schemas, { SchemasOp } from './components/schemas'
 import Responses from './components/Responses'
-import Parameters from './components/parameters'
-import RequestBodies from './components/requestBodies'
+import Parameters, { ParametersOp } from './components/parameters'
+import RequestBodies, { RequestBodiesOp } from './components/requestBodies'
 import { firstToUpper } from '../common/utils'
-import ComponentsBase from './components/base'
-import Custom, { CustomObject } from './components/custom'
+import TypeInfoBase from './components/base'
+import Custom, { CustomObject, CustomOp } from './components/custom'
 import type { Document, ResponseObject } from '../types/openapi'
 
 export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
-export type TypeInfoItem = { typeName: string; moduleName: ModuleName; typeInfo: ComponentsBase }
+export type TypeInfoItem = { typeName: string; moduleName: ModuleName; typeInfo: TypeInfoBase }
 
 export default class Components {
   // components!: OpenAPIV3.ComponentsObject
@@ -19,11 +19,11 @@ export default class Components {
   // requestBodies: Record<string, RequestBodies> = {}
 
   // // TODO 一下数据没处理
-  // links: Record<string, ComponentsBase> = {}
-  // headers: Record<string, ComponentsBase> = {}
-  // examples: Record<string, ComponentsBase> = {}
-  // callbacks: Record<string, ComponentsBase> = {}
-  // securitySchemes: Record<string, ComponentsBase> = {}
+  // links: Record<string, TypeInfoBase> = {}
+  // headers: Record<string, TypeInfoBase> = {}
+  // examples: Record<string, TypeInfoBase> = {}
+  // callbacks: Record<string, TypeInfoBase> = {}
+  // securitySchemes: Record<string, TypeInfoBase> = {}
   typeInfoList: TypeInfoItem[] = []
 
   constructor(private baseDate: Document, private pathItems: PathItem[]) {
@@ -45,35 +45,39 @@ export default class Components {
     return name
   }
 
-  pushTypeItem(moduleName: ModuleName, typeInfo: ComponentsBase) {
-    this.typeInfoList.push({ typeName: typeInfo.typeName, moduleName, typeInfo })
+  pushTypeItem(typeInfo: TypeInfoBase) {
+    this.typeInfoList.push({ typeName: typeInfo.typeName, moduleName: typeInfo.moduleName, typeInfo })
   }
 
   private createsObj() {
     const { schemas = {}, parameters = {}, requestBodies = {}, responses = {} } = this.baseDate.components ?? {}
 
-    Object.entries(schemas).forEach(([k, v]) => {
+    Object.entries(schemas).forEach(([k, data]) => {
       const typeName = firstToUpper(k)
-      const typeItem = new Schemas(this, typeName, v as any)
-      this.pushTypeItem('schemas', typeItem)
+      const option: SchemasOp = { parent: this, name: typeName, data, moduleName: 'schemas' }
+      const typeItem = new Schemas(option)
+      this.pushTypeItem(typeItem)
     })
 
-    Object.entries(parameters).forEach(([k, v]) => {
+    Object.entries(parameters).forEach(([k, data]) => {
       const typeName = firstToUpper(k)
-      const typeItem = new Parameters(this, typeName, [v] as any[])
-      this.pushTypeItem('parameters', typeItem)
+      const option: ParametersOp = { parent: this, name: typeName, datas: [data], moduleName: 'parameters' }
+      const typeItem = new Parameters(option)
+      this.pushTypeItem(typeItem)
     })
 
-    Object.entries(requestBodies).forEach(([k, v]) => {
+    Object.entries(requestBodies).forEach(([k, data]) => {
       const typeName = firstToUpper(k)
-      const typeItem = new RequestBodies(this, typeName, v)
-      this.pushTypeItem('requestBodies', typeItem)
+      const option: RequestBodiesOp = { parent: this, name: typeName, data, moduleName: 'requestBodies' }
+      const typeItem = new RequestBodies(option)
+      this.pushTypeItem(typeItem)
     })
 
-    Object.entries(responses).forEach(([k, v]) => {
+    Object.entries(responses).forEach(([k, data]) => {
       const typeName = firstToUpper(k)
-      const typeItem = new Responses(this, typeName, v)
-      this.pushTypeItem('responses', typeItem)
+      const option: RequestBodiesOp = { parent: this, name: typeName, data, moduleName: 'responses' }
+      const typeItem = new Responses(option)
+      this.pushTypeItem(typeItem)
     })
   }
 
@@ -89,20 +93,29 @@ export default class Components {
       if (responseInfo) {
         const [media, { schema, example, examples, encoding }] = responseInfo
         if (schema) {
-          const response = new Schemas(this, responseName, schema, media)
-          this.pushTypeItem('schemas', response)
+          const option: SchemasOp = {
+            parent: this,
+            data: schema,
+            name: responseName,
+            moduleName: 'schemas',
+            resConentType: media
+          }
+          const response = new Schemas(option)
+          this.pushTypeItem(response)
           pathItem.responseType = response
         }
       }
       if (parameters) {
-        const parameter = new Parameters(this, paramsName, parameters)
-        this.pushTypeItem('parameters', parameter)
+        const option: ParametersOp = { parent: this, name: paramsName, datas: parameters, moduleName: 'parameters' }
+        const parameter = new Parameters(option)
+        this.pushTypeItem(parameter)
         pathItem.parameterType = parameter
       }
 
       if (requestBody) {
-        const requestBodies = new RequestBodies(this, bodyName, requestBody)
-        this.pushTypeItem('requestBodies', requestBodies)
+        const option: RequestBodiesOp = { parent: this, name: bodyName, data: requestBody, moduleName: 'requestBodies' }
+        const requestBodies = new RequestBodies(option)
+        this.pushTypeItem(requestBodies)
         pathItem.requestBodyType = requestBodies
       }
     }
@@ -115,8 +128,9 @@ export default class Components {
   }
 
   addCustomType(name: string, types: CustomObject[]) {
-    const typeInfo = new Custom(this, name, types)
-    this.pushTypeItem('custom', typeInfo)
+    const option: CustomOp = { parent: this, name, datas: types, moduleName: 'custom' }
+    const typeInfo = new Custom(option)
+    this.pushTypeItem(typeInfo)
     return typeInfo
   }
 }

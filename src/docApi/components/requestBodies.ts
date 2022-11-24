@@ -1,5 +1,5 @@
-import Components from '../components'
-import ComponentsBase from './base'
+import Components, { ModuleName } from '../components'
+import TypeInfoBase from './base'
 import type {
   BodyObject,
   ResponseData,
@@ -7,19 +7,28 @@ import type {
   ResponseObject,
   MediaTypeObject,
   ReferenceObject,
-  RequestBodyObject,
-  ExternalDocumentationObject,
-  ArraySchemaObject
+  RequestBodyObject
 } from '../../types/openapi'
-import { firstToUpper } from '../../common/utils'
 
-export default class RequestBodies extends ComponentsBase {
+export type RequestBodiesOp = {
+  parent: Components
+  name: string
+  data: BodyObject | ResponseData
+  moduleName: ModuleName
+}
+export default class RequestBodies extends TypeInfoBase {
+  data: RequestBodiesOp['data']
   required?: boolean
+  moduleName: RequestBodiesOp['moduleName']
   contentType?: string
   additionalProperties?: boolean | ReferenceObject | SchemaObject
 
-  constructor(parent: Components, public name: string, private data: BodyObject | ResponseData) {
+  // TODO BodyObject  的 required 是控制 body 的集合是否必传，但是 body 和 params 合并，应该没什么意义了。
+  constructor(op: RequestBodiesOp) {
+    const { parent, name, data, moduleName } = op
     super(parent, name)
+    this.data = data
+    this.moduleName = moduleName
   }
 
   init() {
@@ -47,22 +56,14 @@ export default class RequestBodies extends ComponentsBase {
     if ($ref) {
       // 引用其它类型
       this.pushRef($ref)
-    } else {
-      
-      // 处理 泛型的可能
-      const {items, type} = schema as Partial<ArraySchemaObject>
-      if (items && type) {
-        this.createGenericsTypeinfo(items, firstToUpper(this.name))
+    } else if (schema) {
+      const typeItemList = this.createSchemaTypeItem(schema as SchemaObject, this.name)
+      if (this.moduleName === 'requestBodies') {
+        typeItemList.forEach(i => {
+          i.paramType = 'body'
+        })
       }
-
-      const { properties } = schema as SchemaObject
-      if (!properties) return
-      const schemaList = Object.entries(properties)
-      for (const keyValue of schemaList) {
-        const typeItem = this.formatSchema(keyValue)
-        typeItem.paramType = 'body'
-        this.typeItems.push(typeItem)
-      }
+      this.typeItems.push(...typeItemList)
     }
   }
 }

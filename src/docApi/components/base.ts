@@ -1,35 +1,37 @@
 import {
   BaseSchemaObject,
   ComponentsObject,
-  SchemaItemsObject,
   SchemaObjectType,
   ParameterObject,
   SchemaObject,
   Properties,
   ReferenceObject,
   ArraySchemaObject,
-  ExternalDocumentationObject
+  ExternalDocumentationObject,
+  NonArraySchemaObject,
+  SchemasData
 } from '../../types/openapi'
-import Schemas from './schemas'
+import Schemas, { SchemasOp } from './schemas'
 import { Schema } from './parameters'
-import Components from '../components'
+import Components, { ModuleName } from '../components'
 import { firstToUpper } from '../../common/utils'
-import TypeItem, { TypeItemOption } from '../typeItem'
+import TypeItem from '../typeItem'
 
 // FIXME 类型继承，可能会存在这种怪异类型
 // interface TypeName extends Array<number> {
 //   test: ''
 // }
 
-export default abstract class ComponentsBase {
-  baseRef = '#/components/'
+const baseRef = '#/components/'
+export default abstract class TypeInfoBase {
   title?: string
   typeName: string
   typeItems: TypeItem[] = []
   deprecated?: boolean
   description?: string
+  abstract moduleName: ModuleName
   // 继承类型的泛型入参 interface TypeName extends Array<number> {}
-  refs: { typeInfo: ComponentsBase; genericsItem?: ComponentsBase }[] = []
+  refs: { typeInfo: TypeInfoBase; genericsItem?: TypeInfoBase | string }[] = []
   attrs: Record<string, any> = {} // 自定义属性
   /** 外部链接描叙 */
   externalDocs?: ExternalDocumentationObject
@@ -44,9 +46,11 @@ export default abstract class ComponentsBase {
     this.typeName = parent.checkName(name)
   }
 
+  getExtends() {}
+
   abstract init(): void
 
-  getType(type?: SchemaObjectType, ref?: string): TypeItemOption['type'] {
+  protected getType(type?: SchemaObjectType, ref?: string): TypeItem['type'] {
     if (ref) return this.findRefType(ref)
     if (!type) return 'any'
     if (type === 'array') return 'Array'
@@ -54,47 +58,59 @@ export default abstract class ComponentsBase {
     return type
   }
 
-  findRefType(ref: string): ComponentsBase | undefined {
-    if (!ref.startsWith(this.baseRef)) return
-    const [moduleName, typeName] = ref.replace(this.baseRef, '').split('/') as [keyof ComponentsObject, string]
+  protected findRefType(ref: string): TypeInfoBase | undefined {
+    if (!ref.startsWith(baseRef)) return
+    const [moduleName, typeName] = ref.replace(baseRef, '').split('/') as [keyof ComponentsObject, string]
     const typeItem = this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.typeInfo.name === typeName)
     return typeItem?.typeInfo
   }
 
-  pushRef(ref?: string, genericsItem?: ComponentsBase) {
+  protected pushRef(ref?: string, genericsItem?: TypeInfoBase) {
     if (!ref) return
     const typeInfo = this.findRefType(ref)
     if (typeInfo) this.refs.push({ typeInfo, genericsItem })
   }
 
-  createGenericsTypeinfo(items: ReferenceObject | SchemaObject, name: string) {
+  protected createGenericsTypeinfo(items: ReferenceObject | SchemaObject, name: string) {
     // 继承泛型逻辑
 
+    const { parent } = this
+    const { type } = items as SchemaObject
     const { $ref } = items as ReferenceObject
-    const typeInfo = new Schemas(this.parent, 'Array', items) // 创建 ts 原生 Array【用于类型继承，不会生成类型】
-    let genericsItem: ComponentsBase | undefined
+    const { items: cItems } = items as ArraySchemaObject
+    const option: SchemasOp = { parent, name: 'Array', data: items, moduleName: 'schemas' }
+    const typeInfo = new Schemas(option) // 创建 ts 原生 Array【用于类型继承，不会生成类型】
+    let genericsItem: TypeInfoBase | string | undefined = 'any'
     if ($ref) {
       genericsItem = this.findRefType($ref)
-    } else {
+    } else if (typeof type === 'string') {
+      genericsItem = type
+    } else if (cItems) {
       // 创建泛型类型
-      genericsItem = new Schemas(this.parent, firstToUpper(`${name}T`), items as SchemaObject)
+      const option: SchemasOp = { parent, name: firstToUpper(`${name}T`), data: cItems, moduleName: 'schemas' }
+      genericsItem = new Schemas(option)
       genericsItem.init()
-      this.parent.pushTypeItem('schemas', genericsItem)
+      this.parent.pushTypeItem(genericsItem)
     }
-    this.refs.push({ typeInfo, genericsItem })
+    return { typeInfo, genericsItem }
   }
 
-  protected createSchemaTypeItem(schemaInfo: SchemaObject, name: string): TypeItem[] {
-    const { items } = schemaInfo as Partial<ArraySchemaObject>
-    const { properties, additionalProperties, required, type } = schemaInfo
+  protected createSchemaTypeItem(schema: SchemaObject, name: string): TypeItem[] {
+    const { items } = schema as Partial<ArraySchemaObject>
+    const { properties, additionalProperties, required = [], type } = schema
 
     // 泛型逻辑
     if (items) {
-      this.createGenericsTypeinfo(items, name)
+      const ref = this.createGenericsTypeinfo(items, name)
+      this.refs.push(ref)
     }
 
     if (!properties) return []
-    const typeKeyInfo = Object.entries(properties).map(i => this.formatSchema(i, required))
+    const typeItemList = Object.entries(properties).map(([name, schema]) =>
+      this.createSchemaType(name, schema, required.includes(name))
+    )
+
+    // TODO 处理 Record 类型
     if (additionalProperties) {
       if (typeof additionalProperties === 'boolean') {
       } else {
@@ -104,7 +120,7 @@ export default abstract class ComponentsBase {
         console.log(additionalProperties)
       }
       // const { propertyName, mapping } = discriminator
-      // typeKeyInfo.push(
+      // typeItemList.push(
       //   new TypeItem({
       //     name: propertyName,
       //     type: !mapping ? 'Record<string, any>' : undefined,
@@ -116,77 +132,45 @@ export default abstract class ComponentsBase {
       //   })
       // )
     }
-    return typeKeyInfo
+    return typeItemList
   }
 
-  protected formatSchema([keyName, keyValue]: [string, Properties], requiredNames: string[] = []): TypeItem {
+  protected createSchemaType(keyName: string, schema: SchemasData, required?: boolean): TypeItem {
+    const { $ref } = schema as ReferenceObject
+    const { items } = schema as ArraySchemaObject // 数组需要泛型入参
+    const { type } = schema as NonArraySchemaObject
+
     const {
       example,
       nullable,
-      required,
       properties,
       deprecated,
       description,
       externalDocs,
-      enum: _enum = []
-    } = keyValue as BaseSchemaObject
-
-    const { items, type, $ref } = keyValue as SchemaItemsObject
-
-    // items 泛型入参，最多只有一个泛型入参
-    // openapi3 没有了泛型形参定义
-    const { $ref: itemRef } = items ?? {}
-    let genericsItem: TypeItemOption['genericsItem'] | undefined
-    if (itemRef) {
-      // 泛型 为 引用类型
-      genericsItem = this.getType(undefined, itemRef)
-    } else if (items) {
-      // 泛型 为 schema 类型
-      genericsItem = this.formatSchema([`${keyName}Items`, items], required)
-    }
+      enum: _enum = [],
+      required: childrenRequired
+    } = schema as BaseSchemaObject
 
     const children = !!properties ? this.createSchemaTypeItem(properties, keyName) : undefined
     return new TypeItem({
+      ref: items ? this.createGenericsTypeinfo(items, keyName) : undefined,
       example,
       nullable,
       children,
+      required,
       deprecated,
       description,
       externalDocs,
-      genericsItem,
       name: keyName,
       enumTypes: _enum,
-      type: this.getType(type, $ref),
-      required: requiredNames.includes(keyName)
+      type: this.getType(type, $ref)
     })
   }
 
   protected formatParameters(data: ParameterObject) {
-    const { name, deprecated, schema, required, description, example } = data
-    const { type: defType, items, $ref } = schema as SchemaItemsObject
-
-    let genericsItem: TypeItemOption['genericsItem']
-    if ($ref) {
-      genericsItem = this.getType(defType, $ref)
-    } else if (items) {
-      genericsItem = this.formatSchema([`${name}Items`, items])
-    }
-
-    const type = this.getType(defType, $ref)
-
-    const paramType = data?.in as TypeItemOption['paramType']
-    const enumTypes = (schema as Schema)?.enum
-
-    return new TypeItem({
-      name,
-      type,
-      paramType,
-      required,
-      example,
-      enumTypes,
-      description,
-      deprecated,
-      genericsItem
-    })
+    const { name, in: paramType, deprecated, schema = {}, required, description, example } = data
+    const typeItem = this.createSchemaType(name, { ...schema, deprecated, description, example }, required)
+    typeItem.paramType = paramType as TypeItem['paramType']
+    return typeItem
   }
 }

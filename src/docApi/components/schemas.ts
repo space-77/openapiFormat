@@ -1,22 +1,24 @@
-import Components from '../components'
-import ComponentsBase from './base'
+import Components, { ModuleName } from '../components'
+import TypeInfoBase from './base'
 import type { SchemasData, SchemaObject, ReferenceObject } from '../../types/openapi'
 
-export default class Schemas extends ComponentsBase {
-  $ref?: string
+export type SchemasOp = { parent: Components; name: string; data: SchemasData; resConentType?: string; moduleName: ModuleName }
+export default class Schemas extends TypeInfoBase {
+  data: SchemasOp['data']
+  moduleName: SchemasOp['moduleName']
+  resConentType?: string
 
-  constructor(parent: Components, public name: string, private data: SchemasData, public resConentType?: string) {
+  constructor(op: SchemasOp) {
+    const { parent, name, data, resConentType, moduleName } = op
     super(parent, name)
+    this.data = data
+    this.moduleName = moduleName
+    this.resConentType = resConentType
   }
 
   init = () => {
     const { data, name } = this
     const { $ref } = data as ReferenceObject
-    // const { items, type } = data as Partial<ArraySchemaObject>
-    // if (items && type) {
-    //   // 继承泛型逻辑
-    //   this.createGenericsTypeinfo(items, firstToUpper(name))
-    // }
 
     if ($ref) {
       // 引用其它类型

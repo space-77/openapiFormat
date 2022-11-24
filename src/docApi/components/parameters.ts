@@ -1,15 +1,21 @@
-import Components from '../components'
-import ComponentsBase from './base'
-import type { SchemaObject, ParameterObject, ReferenceObject, ExternalDocumentationObject } from '../../types/openapi'
+import Components, { ModuleName } from '../components'
+import TypeInfoBase from './base'
+import type { SchemaObject, ParameterObject, ReferenceObject } from '../../types/openapi'
 
 export type Schema = ReferenceObject & SchemaObject
 export type ParametersData = ReferenceObject | ParameterObject
 
-export default class Parameters extends ComponentsBase {
+export type ParametersOp = { parent: Components; name: string; datas: ParametersData[]; moduleName: ModuleName }
+export default class Parameters extends TypeInfoBase {
+  datas: ParametersOp['datas']
+  moduleName: ParametersOp['moduleName']
   additionalProperties: any
 
-  constructor(parent: Components, public name: string, private datas: ParametersData[]) {
+  constructor(op: ParametersOp) {
+    const { moduleName, parent, name, datas } = op
     super(parent, name)
+    this.datas = datas
+    this.moduleName = moduleName
   }
 
   init = () => {
@@ -17,7 +23,7 @@ export default class Parameters extends ComponentsBase {
       const { $ref } = keyItem as any
       if ($ref) {
         this.pushRef($ref)
-      } else {
+      } else if (keyItem) {
         this.typeItems.push(this.formatParameters(keyItem as ParameterObject))
       }
     }

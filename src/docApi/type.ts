@@ -24,6 +24,4 @@ export interface ComponentsChildBase {
   typeItems: TypeItem[]
 
   init: () => void
-
-  // getGenericsType(generics: TypeItemOption['genericsItem']): string
 }

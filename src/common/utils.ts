@@ -1,6 +1,6 @@
 import balanced from 'balanced-match'
 import ComponentsBase from '../docApi/components/base'
-import TypeItem, { TypeItemOption } from '../docApi/typeItem'
+import TypeItem from '../docApi/typeItem'
 
 /**
  * @param str
@@ -75,41 +75,35 @@ export function getEnumType(type: string, enumTypes: any[] = []) {
   return type
 }
 
-export function getGenerics4TypeItem(item: TypeItem): string {
-  // console.log({ enumTypes })
-  const { type, genericsItem, enumTypes } = item
-  if (genericsItem) {
-    if (genericsItem instanceof TypeItem) {
-      return `<${type}<${getGenerics4TypeItem(genericsItem)}>>`
-    } else if (typeof genericsItem === 'string') {
-      return `<${type}<${genericsItem}>>`
-    } else {
-      const { typeName } = genericsItem
-      return `<${type}<${typeName}>>`
-    }
-  } else if (typeof type === 'string') {
-    return `<${getEnumType(type, enumTypes)}>`
-  }
-  console.log(JSON.stringify(item))
-  return ''
-}
+// export function getGenerics4TypeItem(item: TypeItem): string {
+//   // console.log({ enumTypes })
+//   const { type, genericsItem, enumTypes } = item
+//   if (genericsItem) {
+//     if (genericsItem instanceof TypeItem) {
+//       return `<${type}<${getGenerics4TypeItem(genericsItem)}>>`
+//     } else if (typeof genericsItem === 'string') {
+//       return `<${type}<${genericsItem}>>`
+//     } else {
+//       const { typeName } = genericsItem
+//       return `<${type}<${typeName}>>`
+//     }
+//   } else if (typeof type === 'string') {
+//     return `<${getEnumType(type, enumTypes)}>`
+//   }
+//   console.log(JSON.stringify(item))
+//   return ''
+// }
 
-export function getGenericsType(generics: TypeItemOption['genericsItem'], enumTypes: any[] = []) {
-  // console.log(enumTypes, generics)
-  if (!generics) return ''
-
-  // console.log(enumTypes)
-
-  // console.log(JSON.stringify(generics))
-
-  if (typeof generics === 'string') {
-    return `<${getEnumType(generics, enumTypes)}>`
-  } else if (generics instanceof TypeItem) {
-    // 泛型 为 schema 类型,
-    // TODO 泛型包泛型
-    return getGenerics4TypeItem(generics)
-  }
-  // 泛型 为 引用类型
-  const { typeName } = generics as ComponentsBase
-  return `<${typeName}>`
-}
+// export function getGenericsType(generics: TypeItem['genericsItem'], enumTypes: any[] = []) {
+//   if (!generics) return ''
+//   if (typeof generics === 'string') {
+//     return `<${getEnumType(generics, enumTypes)}>`
+//   } else if (generics instanceof TypeItem) {
+//     // 泛型 为 schema 类型,
+//     // TODO 泛型包泛型
+//     return getGenerics4TypeItem(generics)
+//   }
+//   // 泛型 为 引用类型
+//   const { typeName } = generics as ComponentsBase
+//   return `<${typeName}>`
+// }
