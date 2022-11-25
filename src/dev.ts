@@ -1,7 +1,14 @@
 // import docInit from './index'
 // // import api from '../output'
-import axios from 'axios'
-import cheerio from 'cheerio'
+// import axios from 'axios'
+// import cheerio from 'cheerio'
+import { bingTranslator } from 'node-translates'
+
+~(async () => {
+  const text = await bingTranslator(['唧唧复唧唧', '木兰当户织'])
+  console.log(text)
+})()
+
 // import fs from 'fs'
 // import path from 'path'
 // import balanced from 'balanced-match'
@@ -43,22 +50,25 @@ import cheerio from 'cheerio'
 // //   }
 // // })()
 
-const { baiduTranslator, googleTranslator, youdaoTranslator, bingTranslator } = require('translators')
+// const { baiduTranslator, googleTranslator, youdaoTranslator, bingTranslator } = require('translators')
 
-bingTranslator('犯规。堆土机。下班。面具。玩具。圣诞节。集团。空间。接口', 'zh', 'en', {
-  // Foul. Stacker. Work. Mask. Toy. Christmas. Clique. Space. interface
-  if_use_cn_host: false
-}).then((value: string) => {
-  console.log(value)
-})
+// bingTranslator('“犯规”、“推土机”、“下班”、“面具”、“玩具”、“圣诞节”、“集团”、“空间”、“接口”', 'zh', 'en', {
+// // bingTranslator('推土机', 'zh', 'en', {
+//   // Foul. Stacker. Work. Mask. Toy. Christmas. Clique. Space. interface
+//   if_use_cn_host: false
+// }).then((value: string) => {
+//   console.log(value)
+// })
 
-const { youdao, baidu, google } = require('translation.js')
+// const { youdao, baidu, google } = require('translation.js')
 
-youdao.translate('你').then((t: string) => {
-  // Foul.Earth-moving machine.after workMask.Toys.ChristmasGroup.Space.interface
-  // A foul...Earth-moving machine...after workThe mask...Toy...ChristmasGroup...Space...interface
-  console.log(t)
-})
+// // “犯规”“堆土机”“下班”“面具”“玩具”“圣诞节”“集团”“空间”“接口”
+// youdao.translate('“犯规”、“推土机”、“下班”、“面具”、“玩具”、“圣诞节”、“集团”、“空间”、“接口”').then((t: string) => {
+// // youdao.translate('推土机').then((t: string) => {
+//   // Foul.Earth-moving machine.after workMask.Toys.ChristmasGroup.Space.interface
+//   // A foul...Earth-moving machine...after workThe mask...Toy...ChristmasGroup...Space...interface
+//   console.log(t)
+// })
 
 // ~(async () => {
 //   // https://translate.google.com/?hl=zh-CN&sl=zh-CN&tl=en&text=检、测、语、言&op=translate // google
