@@ -1,9 +1,10 @@
+import Translate, { DictList } from '../common/translate'
 import Components from './components'
+import ComponentsBase from './components/base'
 import type { OpenAPIV3 } from 'openapi-types'
 import { OperationObject } from '../types/openapi'
 import { HttpMethods, httpMethods } from '../common'
 import { firstToUpper, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
-import ComponentsBase from './components/base'
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -30,6 +31,7 @@ export type FuncGroupList = {
 export default class DocApi {
   // 相同的路径
   private samePath = ''
+  public translate: Translate
   private pathItems: PathItem[] = []
   typeGroup!: Components
   get funcGroupList() {
@@ -50,11 +52,35 @@ export default class DocApi {
     return funcGroupList
   }
 
-  constructor(public json: OpenAPIV3.Document) {
-    // 1、先收集数据
-    // 2、再整理数据
-    this.formatFuns()
-    this.formatTypes()
+  constructor(public json: OpenAPIV3.Document, dictList?: DictList[]) {
+    this.translate = new Translate(dictList)
+  }
+
+  async init() {
+    // 1、翻译
+    // 2、先收集数据
+    // 3、再整理数据
+    this.onTranslate()
+    // this.formatFuns()
+    // this.formatTypes()
+  }
+
+  private onTranslate() {
+    const texts: string[] = []
+
+    Object.values(this.json.paths).forEach(i => {
+      // console.log(i);
+      if (!i) return
+      Object.values(i).forEach(j => {
+        if (typeof j === 'object' && !Array.isArray(j)) {
+          // console.log(j.operationId)
+          // j.operationId
+        }
+      })
+    })
+
+    
+    // console.log(paths)
   }
 
   private formatTypes() {

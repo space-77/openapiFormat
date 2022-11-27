@@ -3,7 +3,7 @@ import Schemas, { SchemasOp } from './components/schemas'
 import Responses from './components/Responses'
 import Parameters, { ParametersOp } from './components/parameters'
 import RequestBodies, { RequestBodiesOp } from './components/requestBodies'
-import { firstToUpper } from '../common/utils'
+import { checkName, firstToUpper } from '../common/utils'
 import TypeInfoBase from './components/base'
 import Custom, { CustomObject, CustomOp } from './components/custom'
 import type { Document, ResponseObject } from '../types/openapi'
@@ -33,16 +33,21 @@ export default class Components {
     this.formatCode()
   }
 
-  checkName(name: string) {
-    // FIXME 翻译，回调
-    const hasName = this.typeInfoList.some(i => i.typeName === name)
-    const lastNumReg = /((?!0)\d+)$/
+  checkName(name: string): string {
+    return checkName(name, checkName => this.typeInfoList.some(i => i.typeName === checkName))
+    // const hasName = this.typeInfoList.some(i => i.typeName === name)
+    // const lastNumReg = /((?!0)\d+)$/
 
-    if (hasName) {
-      if (!lastNumReg.test(name)) return `${name}1`
-      return name.replace(lastNumReg, $1 => `${Number($1) + 1}`)
-    }
-    return name
+    // if (hasName) {
+    //   let newName = ''
+    //   if (!lastNumReg.test(name)) {
+    //     newName = `${name}1`
+    //   } else {
+    //     newName = name.replace(lastNumReg, $1 => `${Number($1) + 1}`)
+    //   }
+    //   return this.checkName(newName)
+    // }
+    // return name
   }
 
   pushTypeItem(typeInfo: TypeInfoBase) {

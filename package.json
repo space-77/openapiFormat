@@ -40,14 +40,13 @@
     "axios": "*",
     "balanced-match": "^2.0.0",
     "cheerio": "1.0.0-rc.12",
+    "deep-for-each": "^3.0.0",
     "is-chinese": "^1.4.8",
     "is-es2016-keyword": "^1.0.0",
     "lodash": "^4.17.21",
+    "node-translates": "^1.2.2",
     "openapi": "^1.0.1",
     "openapi-types": "^12.0.2",
-    "swagger2openapi": "^7.0.8",
-    "translation.js": "^0.7.15",
-    "translators": "^1.0.3",
-    "node-translates": "git+https://github.com/space-77/node-translates.git"
+    "swagger2openapi": "^7.0.8"
   }
 }

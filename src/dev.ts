@@ -1,13 +1,13 @@
-// import docInit from './index'
+import docInit from './index'
 // // import api from '../output'
 // import axios from 'axios'
 // import cheerio from 'cheerio'
-import { bingTranslator } from 'node-translates'
+// import { bingTranslator } from 'node-translates'
 
-~(async () => {
-  const text = await bingTranslator(['唧唧复唧唧', '木兰当户织'])
-  console.log(text)
-})()
+// ~(async () => {
+//   const text = await bingTranslator(['唧唧复唧唧', '木兰当户织'])
+//   console.log(text)
+// })()
 
 // import fs from 'fs'
 // import path from 'path'
@@ -24,9 +24,24 @@ import { bingTranslator } from 'node-translates'
 // // console.log(text.toString().replace(/(#)/g, ''))
 
 // // https://generator3.swagger.io/index.html
+const url = 'http://114.115.202.183:8088/v2/api-docs'
 // const url = 'https://generator3.swagger.io/openapi.json'
 // // const openapi = new OpenApi(url)
-// docInit(url)
+~(async () => {
+  try {
+    const dictList: any[] = []
+    const res = await docInit(url, dictList)
+    console.log('----------')
+    console.log('----------')
+    console.log('----------')
+    console.log(dictList === res.dictList)
+    console.log('----------')
+    console.log('----------')
+    console.log('----------')
+  } catch (error) {
+    // console.error(error)
+  }
+})()
 
 // // openapi.start({})
 // // openapi.

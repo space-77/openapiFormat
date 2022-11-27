@@ -1,67 +1,69 @@
 import _ from 'lodash'
-// const { youdao, baidu, google } = require('translation.js')
-const { baiduTranslator, googleTranslator, youdaoTranslator, bingTranslator } = require('translators')
+import { iflyrecTranslator, baiduTranslator, bingTranslator } from 'node-translates'
 
-export class Translate {
-  private engines = [google, youdao, baidu]
-  dict = {}
+export type DictList = { zh: string; en: string }
+export type WaitTranslate = { resolve: (value: string) => void; reject: (reason?: any) => void; text: string }
 
-  constructor(private dictName = 'dict.json') {
-    const localDict = PontDictManager.loadFileIfExistsSync(dictName)
+export default class Translate {
+  private waitTranslateList: WaitTranslate[] = []
+  private engines = [iflyrecTranslator, baiduTranslator, bingTranslator]
 
-    if (localDict) {
-      const dictstr = localDict.slice(0, localDict.length - 2)
+  constructor(public dictList: DictList[] = []) {}
 
-      try {
-        this.dict = JSON.parse(`{${dictstr}}`)
-      } catch (err) {
-        debugLog.error('[translate] local dict is invalid, attempting auto fix')
-        PontDictManager.removeFile(dictName)
-      }
-    }
+  private dictHasKey(key: string) {
+    return this.dictList.some(i => i.zh === key)
   }
 
-  appendToDict(pairKey: { cn: string; en: string }) {
-    if (!this.dict[pairKey.cn]) {
-      this.dict[pairKey.cn] = pairKey.en
-      PontDictManager.appendFileSync(this.dictName, `"${pairKey.cn}": "${pairKey.en}",\n`)
-    }
-  }
-
-  startCaseClassName(result) {
-    // 处理以数字开头的异常
+  private startCaseClassName(textEn: string) {
     // 缓存到电脑某个位置的缓存区域
-    let wordArray = _.startCase(result).split(' ')
+    let wordArray = _.startCase(textEn).split(' ')
     if (wordArray.length > 6) {
-      wordArray = [].concat(wordArray.slice(0, 5), wordArray.slice(-1))
+      wordArray = [...wordArray.slice(0, 5), ...wordArray.slice(-1)]
     }
-    return wordArray.join('')
+
+    // 处理以数字开头的异常
+    return wordArray.join('').replace(/^\d+\S+/, $1 => `N${$1}`)
   }
 
-  async translateAsync(text: string, engineIndex = 0) {
-    if (this.dict[text]) {
-      return this.dict[text]
-    }
-
+  private async onTranslate(texts: WaitTranslate[], engineIndex = 0): Promise<DictList[]> {
+    if (texts.length === 0) return []
     if (engineIndex >= this.engines.length) {
-      throw new Error('translate error, all translate engine can not access')
+      const errStr = 'translate error, all translate engine can not access'
+      texts.forEach(i => i.reject(errStr))
+      throw new Error(errStr)
     }
-
-    let enKey
-    let index = engineIndex
-
     try {
-      let res = await this.engines[index].translate(text)
-      enKey = this.startCaseClassName(res.result[0])
-
-      assert.ok(enKey)
-
-      this.appendToDict({ cn: text, en: enKey })
-      return enKey
-    } catch (err) {
-      return this.translateAsync(text, index + 1)
+      const resList = await this.engines[engineIndex](texts.map(i => i.text))
+      resList.forEach((i, index) => {
+        i.en = this.startCaseClassName(i.en)
+        this.dictList.push(i)
+        texts[index].resolve(i.en)
+      })
+      return resList
+    } catch (error) {
+      return this.onTranslate(texts, engineIndex + 1)
     }
+  }
+
+  find(text: string) {
+    return this.dictList.find(i => i.zh === text)
+  }
+
+  addTranslate(text: string) {
+    return new Promise<string>((resolve, reject) => {
+      this.waitTranslateList.push({ text, resolve, reject })
+    })
+  }
+
+  async translate() {
+    // 过滤出没有缓存的中文数据
+    const texts = this.waitTranslateList.filter(i => {
+      const item = this.dictList.find(j => j.zh === i.text)
+      if (item) i.resolve(item.en)
+      return !item
+    })
+    console.log(`正在翻译共翻译 ${texts.length} 条数据`)
+    await this.onTranslate(texts)
+    this.waitTranslateList = []
   }
 }
-
-export const Translator = new Translate()

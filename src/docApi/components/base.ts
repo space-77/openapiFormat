@@ -116,7 +116,7 @@ export default abstract class TypeInfoBase {
         // let typeItem =
         if ((additionalProperties as ReferenceObject).$ref) {
         }
-        console.log(additionalProperties)
+        // console.log(additionalProperties)
       }
       // const { propertyName, mapping } = discriminator
       // typeItemList.push(

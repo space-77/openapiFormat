@@ -1,6 +1,7 @@
 import balanced from 'balanced-match'
 import ComponentsBase from '../docApi/components/base'
 import TypeItem from '../docApi/typeItem'
+const isJsKeyword = require('is-es2016-keyword')
 
 /**
  * @param str
@@ -74,6 +75,40 @@ export function getEnumType(type: string, enumTypes: any[] = []) {
   }
   return type
 }
+
+export function checkName(name: string, checkFun: (name: string) => boolean): string {
+  const hasName = checkFun(name)
+  const lastNumReg = /((?!0)\d+)$/
+
+  if (hasName) {
+    let newName = ''
+    if (!lastNumReg.test(name)) {
+      newName = `${name}1`
+    } else {
+      newName = name.replace(lastNumReg, $1 => `${Number($1) + 1}`)
+    }
+    return checkName(newName, checkFun)
+  }
+  return name
+}
+
+// // File
+// // URLSearchParams
+// // AbortController
+// // ArrayBuffer
+
+// /**
+//  * @description 监测需要定义的类型名字是不是Ts已经使用的名称，如 File, URL, URLSearchParams 等等
+//  */
+// function isTsKeyword(text: string): boolean {
+  
+//   // isJsKeyword
+//   // const keys = ['type','interface', 'keyof', 'in', 'as', 'infer', 'implements', ]
+//   // const keys2 = ['abstract', 'package', 'private', 'protected', 'public', 'static', 'declare', 'get', 'module', 'require']
+//   const typeKeys = ['AbortController', ]
+
+
+// }
 
 // export function getGenerics4TypeItem(item: TypeItem): string {
 //   // console.log({ enumTypes })
