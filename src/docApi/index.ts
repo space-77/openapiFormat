@@ -60,28 +60,28 @@ export default class DocApi {
     // 1、翻译
     // 2、先收集数据
     // 3、再整理数据
-    this.onTranslate()
-    // this.formatFuns()
-    // this.formatTypes()
+    // this.onTranslate()
+    this.formatFuns()
+    this.formatTypes()
   }
 
-  private onTranslate() {
-    const texts: string[] = []
+  // private onTranslate() {
+  //   const texts: string[] = []
 
-    Object.values(this.json.paths).forEach(i => {
-      // console.log(i);
-      if (!i) return
-      Object.values(i).forEach(j => {
-        if (typeof j === 'object' && !Array.isArray(j)) {
-          // console.log(j.operationId)
-          // j.operationId
-        }
-      })
-    })
+  //   Object.values(this.json.paths).forEach(i => {
+  //     // console.log(i);
+  //     if (!i) return
+  //     Object.values(i).forEach(j => {
+  //       if (typeof j === 'object' && !Array.isArray(j)) {
+  //         // console.log(j.operationId)
+  //         // j.operationId
+  //       }
+  //     })
+  //   })
 
     
-    // console.log(paths)
-  }
+  //   // console.log(paths)
+  // }
 
   private formatTypes() {
     // 1、梳理 收集 类型以及类型索引

@@ -14,8 +14,34 @@ const isChinese = require('is-chinese')
 const converter = require('swagger2openapi')
 const deepForEach = require('deep-for-each')
 
-type Subject = { originalRef: string; $ref: string; title?: string }
+type Subject = { originalRef: string; $ref: string; title?: string; tags?: string[] }
 type TextList = { subjects: Subject[]; text: string; textEn?: string }
+type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string }
+
+
+const tagsList: TagsList[] = []
+type TagNamesOp = {tags:string[], subject:  { tags: string[] }, t: Translate, data: any}
+function translateTagNames(options: TagNamesOp) {
+  const { tags, subject, t, data } = options
+  tags.map(async text => {
+    const tag = tagsList.find(i => i.text === text)
+    if (!tag) {
+      const tagItem = { subjects: [subject], text, textEn: '' }
+      tagsList.push(tagItem)
+      const textEn = await t.addTranslate(text)
+      tagItem.textEn = textEn
+      tagItem.subjects.forEach(subject => {
+        const index = subject.tags.findIndex(i => i === text)
+        if (index > -1) subject.tags[index] = textEn // 替换原有的 tag 名称
+        data.tags.forEach((tag: any) => {
+          if (tag.name === text) tag.name = textEn
+        })
+      })
+    } else {
+      tag.subjects.push(subject as any)
+    }
+  })
+}
 
 async function translate(data: any, dictList: DictList[]) {
   const t = new Translate(dictList)
@@ -82,6 +108,8 @@ async function translate(data: any, dictList: DictList[]) {
       //   definitions[subject.originalRef] = definition
       //   delete definitions[value]
       // }
+    } else if (key === 'tags' && subject !== data && Array.isArray(value) && value.length > 0) {
+      translateTagNames({ t, tags:value, subject: subject as any, data })
     }
   }
 
@@ -121,6 +149,8 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
         const textEn = await t.addTranslate(refNname)
         subject.$ref = subject.$ref.replace(refNname, textEn)
       }
+    } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
+      translateTagNames({ t, tags:value, subject: subject as any, data })
     }
     // promsList.push(forEachProm(value, key, subject))
   })
@@ -151,7 +181,7 @@ async function getApiData(url: string, dictList: DictList[]) {
       const { data } = await axios.get(url)
       if (data.swagger === '2.0') {
         const { dictList: newDictList } = await translate(data, dictList)
-        // fs.writeFileSync(path.join(__dirname, '../mock/swagger2.json'), JSON.stringify(data))
+        fs.writeFileSync(path.join(__dirname, '../mock/swagger2.json'), JSON.stringify(data))
         converter.convertObj(data, { components: true }, function (err: any, options: any) {
           if (err) {
             reject('swagger2.0 to openapi3.0 error')
