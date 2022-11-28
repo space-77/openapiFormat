@@ -45,28 +45,43 @@ async function translate(data: any, dictList: DictList[]) {
     }
   }
 
+  function formatStr(value: string) {
+    return value
+      .replace(/»/g, '')
+      .split('«')
+      .filter(text => text.split('').some(isChinese))
+  }
+
   async function forEachProm(value: any, key: string, subject: Subject) {
     if (key === 'originalRef') {
       // 切割
       subject.title = value
-      const texts = (value as string).replace(/»/g, '').split('«').filter(text => text.split('').some(isChinese))
+      const texts = formatStr(value)
 
-      if (texts.length === 0) return
-      const proms = texts.map(async text => {
+      // console.log(value)
+      // if (texts.length === 0) {
+      //   console.log(value)
+      //   return
+      // }
+
+      // console.log(texts)
+
+      texts.map(async text => {
         await addTranslate(text, subject)
       })
 
-      await Promise.all(proms)
+      // await Promise.all(proms)
 
-      const { definitions } = data
-      const definition = definitions[value]
-      // if (subject.originalRef === value) {
-      //   console.log(value)
+      // const { definitions } = data
+      // const definition = definitions[value]
+      // // if (subject.originalRef === value) {
+      // //   console.log(value)
+      // // }
+      // if (definition) {
+      //   // #/definitions/UniversalResponseBody«string»
+      //   definitions[subject.originalRef] = definition
+      //   delete definitions[value]
       // }
-      if (definition) {
-        definitions[subject.originalRef] = definition
-        delete definitions[value]
-      }
     }
   }
 
@@ -77,7 +92,54 @@ async function translate(data: any, dictList: DictList[]) {
   await t.translate()
   await Promise.all(promsList)
 
-  // fs.writeFileSync(dictPath, JSON.stringify(t.dictList, null, 2))
+  if (data.definitions) {
+    Object.entries(data.definitions).forEach(async ([key, value]) => {
+      let newKey = key
+      const proms = formatStr(key).map(async text => {
+        const textEn = await t.addTranslate(text)
+        newKey = newKey.replace(text, textEn)
+      })
+      await Promise.all(proms)
+
+      if (newKey === key) return
+      data.definitions[newKey] = value
+      delete data.definitions[key]
+    })
+    await t.translate()
+  }
+
+  return { data, dictList: t.dictList }
+}
+
+async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
+  const t = new Translate(dictList)
+
+  deepForEach(data, async (value: any, key: string, subject: Subject) => {
+    if (key === '$ref' && typeof value === 'string' && value.startsWith('#/components/')) {
+      const [, , typeInfoKey, refNname] = value.split('/')
+      if (refNname.split('').some(isChinese)) {
+        const textEn = await t.addTranslate(refNname)
+        subject.$ref = subject.$ref.replace(refNname, textEn)
+      }
+    }
+    // promsList.push(forEachProm(value, key, subject))
+  })
+
+  await t.translate()
+  if (data.components) {
+    Object.values(data.components).forEach(moduleValue => {
+      Object.entries(moduleValue).forEach(async ([key, value]) => {
+        if (key.split('').some(isChinese)) {
+          const textEn = await t.addTranslate(key)
+          if (!moduleValue[textEn]) {
+            moduleValue[textEn] = value
+            delete moduleValue[key]
+          }
+        }
+      })
+    })
+    await t.translate()
+  }
 
   return { data, dictList: t.dictList }
 }
@@ -99,7 +161,9 @@ async function getApiData(url: string, dictList: DictList[]) {
           resolve({ json: options.openapi, dictList: newDictList })
         })
       } else {
-        resolve({ json: data, dictList })
+        const { dictList: newDictList } = await translateV3(data, dictList)
+        // fs.writeFileSync(path.join(__dirname, '../mock/openapi3En.json'), JSON.stringify(data))
+        resolve({ json: data, dictList: newDictList })
       }
     } catch (error) {
       reject(error)

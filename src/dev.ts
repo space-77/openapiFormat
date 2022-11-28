@@ -1,3 +1,4 @@
+import path from 'path'
 import docInit from './index'
 // // import api from '../output'
 // import axios from 'axios'
@@ -24,22 +25,26 @@ import docInit from './index'
 // // console.log(text.toString().replace(/(#)/g, ''))
 
 // // https://generator3.swagger.io/index.html
-const url = 'http://114.115.202.183:8088/v2/api-docs'
+// const url = 'http://114.115.202.183:8088/v2/api-docs'
 // const url = 'https://generator3.swagger.io/openapi.json'
+const url = 'https://mock.mengxuegu.com/mock/6384cdec9433403d6c06894e/openapi3/mock'
 // // const openapi = new OpenApi(url)
+const dictPath = path.join(__dirname, '../mock/translate.json')
 ~(async () => {
   try {
+    // const dictList: any[] = require(dictPath)
     const dictList: any[] = []
+    // console.log(dictList)
     const res = await docInit(url, dictList)
-    console.log('----------')
-    console.log('----------')
-    console.log('----------')
-    console.log(dictList === res.dictList)
-    console.log('----------')
-    console.log('----------')
-    console.log('----------')
+    // console.log('----------')
+    // console.log('----------')
+    // console.log('----------')
+    // console.log(dictList === res.dictList)
+    // console.log('----------')
+    // console.log('----------')
+    // console.log('----------')
   } catch (error) {
-    // console.error(error)
+    console.error(error)
   }
 })()
 

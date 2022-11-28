@@ -62,6 +62,7 @@ export default class Translate {
       if (item) i.resolve(item.en)
       return !item
     })
+    if (texts.length === 0) return
     console.log(`正在翻译共翻译 ${texts.length} 条数据`)
     await this.onTranslate(texts)
     this.waitTranslateList = []
