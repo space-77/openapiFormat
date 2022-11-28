@@ -181,7 +181,7 @@ async function getApiData(url: string, dictList: DictList[]) {
       const { data } = await axios.get(url)
       if (data.swagger === '2.0') {
         const { dictList: newDictList } = await translate(data, dictList)
-        fs.writeFileSync(path.join(__dirname, '../mock/swagger2.json'), JSON.stringify(data))
+        // fs.writeFileSync(path.join(__dirname, '../mock/swagger2.json'), JSON.stringify(data))
         converter.convertObj(data, { components: true }, function (err: any, options: any) {
           if (err) {
             reject('swagger2.0 to openapi3.0 error')
