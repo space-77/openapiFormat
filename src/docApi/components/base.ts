@@ -83,7 +83,7 @@ export default abstract class TypeInfoBase {
     if ($ref) {
       genericsItem = this.findRefType($ref)
     } else if (typeof type === 'string') {
-      genericsItem = type
+      genericsItem = this.getType(type)
     } else if (cItems) {
       // 创建泛型类型
       const option: SchemasOp = { parent, name: firstToUpper(`${name}T`), data: cItems, moduleName: 'schemas' }
