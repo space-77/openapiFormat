@@ -27,6 +27,8 @@ export default class Translate {
 
   private async onTranslate(texts: WaitTranslate[], engineIndex = 0): Promise<DictList[]> {
     if (texts.length === 0) return []
+    console.log(`正在翻译共翻译 ${texts.length} 条数据`)
+
     if (engineIndex >= this.engines.length) {
       const errStr = 'translate error, all translate engine can not access'
       texts.forEach(i => i.reject(errStr))
@@ -62,8 +64,6 @@ export default class Translate {
       if (item) i.resolve(item.en)
       return !item
     })
-    if (texts.length === 0) return
-    console.log(`正在翻译共翻译 ${texts.length} 条数据`)
     await this.onTranslate(texts)
     this.waitTranslateList = []
   }

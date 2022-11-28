@@ -144,18 +144,17 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
   return { data, dictList: t.dictList }
 }
 
-type ApiDataReturn = { json: OpenAPIV3.Document; dictList: DictList[] }
+type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
 async function getApiData(url: string, dictList: DictList[]) {
-  return new Promise<ApiDataReturn>(async (resolve, reject) => {
+  return new Promise<ApiData>(async (resolve, reject) => {
     try {
       const { data } = await axios.get(url)
       if (data.swagger === '2.0') {
         const { dictList: newDictList } = await translate(data, dictList)
-        // fs.writeFileSync(path.join(__dirname, '../mock/swagger2.json'), JSON.stringify(data))
+        fs.writeFileSync(path.join(__dirname, '../mock/swagger2.json'), JSON.stringify(data))
         converter.convertObj(data, { components: true }, function (err: any, options: any) {
           if (err) {
-            console.log('error')
-            reject(err)
+            reject('swagger2.0 to openapi3.0 error')
             return
           }
           resolve({ json: options.openapi, dictList: newDictList })
@@ -177,7 +176,7 @@ export default async function (url: string, dictList: DictList[] = []) {
 
     const docApi = new DocApi(res.json)
     await docApi.init()
-    return res
+    return { docApi, dictList: res.dictList }
   } catch (error) {
     return Promise.reject(error)
   }
