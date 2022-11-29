@@ -8,14 +8,12 @@ export type ParametersData = ReferenceObject | ParameterObject
 export type ParametersOp = { parent: Components; name: string; datas: ParametersData[]; moduleName: ModuleName }
 export default class Parameters extends TypeInfoBase {
   datas: ParametersOp['datas']
-  moduleName: ParametersOp['moduleName']
   additionalProperties: any
 
   constructor(op: ParametersOp) {
     const { moduleName, parent, name, datas } = op
-    super(parent, name)
+    super(parent, name, moduleName)
     this.datas = datas
-    this.moduleName = moduleName
   }
 
   init = () => {

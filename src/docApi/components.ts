@@ -57,30 +57,26 @@ export default class Components {
   private createsObj() {
     const { schemas = {}, parameters = {}, requestBodies = {}, responses = {} } = this.baseDate.components ?? {}
 
-    Object.entries(schemas).forEach(([k, data]) => {
-      const typeName = firstToUpper(k)
-      const option: SchemasOp = { parent: this, name: typeName, data, moduleName: 'schemas' }
+    Object.entries(schemas).forEach(([name, data]) => {
+      const option: SchemasOp = { parent: this, name, data, moduleName: 'schemas' }
       const typeItem = new Schemas(option)
       this.pushTypeItem(typeItem)
     })
 
-    Object.entries(parameters).forEach(([k, data]) => {
-      const typeName = firstToUpper(k)
-      const option: ParametersOp = { parent: this, name: typeName, datas: [data], moduleName: 'parameters' }
+    Object.entries(parameters).forEach(([name, data]) => {
+      const option: ParametersOp = { parent: this, name, datas: [data], moduleName: 'parameters' }
       const typeItem = new Parameters(option)
       this.pushTypeItem(typeItem)
     })
 
-    Object.entries(requestBodies).forEach(([k, data]) => {
-      const typeName = firstToUpper(k)
-      const option: RequestBodiesOp = { parent: this, name: typeName, data, moduleName: 'requestBodies' }
+    Object.entries(requestBodies).forEach(([name, data]) => {
+      const option: RequestBodiesOp = { parent: this, name, data, moduleName: 'requestBodies' }
       const typeItem = new RequestBodies(option)
       this.pushTypeItem(typeItem)
     })
 
-    Object.entries(responses).forEach(([k, data]) => {
-      const typeName = firstToUpper(k)
-      const option: RequestBodiesOp = { parent: this, name: typeName, data, moduleName: 'responses' }
+    Object.entries(responses).forEach(([name, data]) => {
+      const option: RequestBodiesOp = { parent: this, name, data, moduleName: 'responses' }
       const typeItem = new Responses(option)
       this.pushTypeItem(typeItem)
     })

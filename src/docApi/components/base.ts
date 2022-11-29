@@ -10,6 +10,7 @@ import {
   NonArraySchemaObject,
   SchemasData
 } from '../../types/openapi'
+import _ from 'lodash'
 import Schemas, { SchemasOp } from './schemas'
 import Components, { ModuleName } from '../components'
 import { firstToUpper } from '../../common/utils'
@@ -28,7 +29,7 @@ export default abstract class TypeInfoBase {
   typeItems: TypeItem[] = []
   deprecated?: boolean
   description?: string
-  abstract moduleName: ModuleName
+  // moduleName: ModuleName
   // 继承类型的泛型入参 interface TypeName extends Array<number> {}
   refs: RefItem[] = []
   attrs: Record<string, any> = {} // 自定义属性
@@ -41,11 +42,46 @@ export default abstract class TypeInfoBase {
     return refs.every(i => i.typeInfo.isEmpty && i.typeInfo?.typeName !== 'Array') && typeItems.length === 0
   }
 
-  constructor(protected parent: Components, public name: string) {
-    this.typeName = parent.checkName(name)
+  constructor(protected parent: Components, public name: string, public moduleName: ModuleName) {
+    this.typeName = parent.checkName(firstToUpper(name))
   }
 
-  getExtends() {}
+  getAllRefs(): RefItem[] {
+    if (this.refs.length === 0) {
+      return []
+    } else {
+      const refsList: RefItem[] = []
+      this.refs.forEach(ref => {
+        if (ref.typeInfo.refs.length > 0) {
+          refsList.push(...ref.typeInfo.getAllRefs())
+        } else {
+        }
+        refsList.push(ref)
+      })
+      return refsList
+    }
+  }
+
+  getTypeItems(): TypeItem[] {
+    const allTypesList: TypeItem[] = [...this.typeItems]
+    const allRef = _.uniq(_.flattenDeep(this.getAllRefs()))
+    allRef.forEach(i => {
+      const { typeItems } = i.typeInfo
+      if (typeItems.length > 0) {
+        allTypesList.push(...typeItems)
+      }
+    })
+
+    return _.uniq(allTypesList).map(i => {
+      if (this.moduleName === 'requestBodies') {
+        const ii = _.cloneDeep(i)
+        ii.paramType = 'body'
+        return ii
+      } else {
+        return i
+      }
+    })
+  }
 
   abstract init(): void
 

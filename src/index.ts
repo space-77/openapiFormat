@@ -1,4 +1,4 @@
-import fs from 'fs'
+import _ from 'lodash'
 import axios from 'axios'
 import DocApi from './docApi'
 import Translate, { DictList } from './common/translate'
@@ -18,9 +18,8 @@ type Subject = { originalRef: string; $ref: string; title?: string; tags?: strin
 type TextList = { subjects: Subject[]; text: string; textEn?: string }
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string }
 
-
 const tagsList: TagsList[] = []
-type TagNamesOp = {tags:string[], subject:  { tags: string[] }, t: Translate, data: any}
+type TagNamesOp = { tags: string[]; subject: { tags: string[] }; t: Translate; data: any }
 function translateTagNames(options: TagNamesOp) {
   const { tags, subject, t, data } = options
   tags.map(async text => {
@@ -109,7 +108,7 @@ async function translate(data: any, dictList: DictList[]) {
       //   delete definitions[value]
       // }
     } else if (key === 'tags' && subject !== data && Array.isArray(value) && value.length > 0) {
-      translateTagNames({ t, tags:value, subject: subject as any, data })
+      translateTagNames({ t, tags: value, subject: subject as any, data })
     }
   }
 
@@ -141,16 +140,19 @@ async function translate(data: any, dictList: DictList[]) {
 
 async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
   const t = new Translate(dictList)
+  const textEnList = new Set<string>([])
 
   deepForEach(data, async (value: any, key: string, subject: Subject) => {
     if (key === '$ref' && typeof value === 'string' && value.startsWith('#/components/')) {
       const [, , typeInfoKey, refNname] = value.split('/')
       if (refNname.split('').some(isChinese)) {
-        const textEn = await t.addTranslate(refNname)
+        let textEn = await t.addTranslate(refNname)
+        textEn = checkName(textEn, checkName => textEnList.has(checkName))
+        textEnList.add(textEn)
         subject.$ref = subject.$ref.replace(refNname, textEn)
       }
     } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
-      translateTagNames({ t, tags:value, subject: subject as any, data })
+      translateTagNames({ t, tags: value, subject: subject as any, data })
     }
     // promsList.push(forEachProm(value, key, subject))
   })
@@ -174,6 +176,56 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
   return { data, dictList: t.dictList }
 }
 
+/**
+ * @desc 修复 swagger 转openAPI后变量名字太长问题
+ */
+function formatOpenapi3Name(json: any) {
+  const names = new Set<string>([])
+  const textMap: Record<string, any> = {}
+  const { components } = json
+  if (!components) return
+
+  deepForEach(json, (value: any, key: string, subject: any) => {
+    if (key === '$ref') {
+      const [, , moduleName, refNname] = value.split('/')
+
+      let newName = Translate.startCaseClassName(refNname)
+      if (newName === refNname) return
+
+      const moduleItem = textMap[moduleName]
+
+      if (!moduleItem) {
+        newName = checkName(newName, checkName => names.has(checkName))
+        names.add(newName)
+        textMap[moduleName] = { refNname: newName }
+      } else {
+        if (moduleItem[refNname]) {
+          // 如果模块中已近存在了新名字，则直接使用模块的新名字
+          newName = moduleItem[refNname]
+        } else {
+          newName = checkName(newName, checkName => names.has(checkName))
+          names.add(newName)
+          moduleItem[refNname] = newName
+        }
+      }
+      subject.$ref = subject.$ref.replace(refNname, newName)
+    }
+  })
+
+  Object.entries(textMap).forEach(([moduleName, names]) => {
+    const moduleItem = components[moduleName]
+    if (!moduleItem || !_.isObject(names)) return
+    Object.entries(names).forEach(([key, name]) => {
+      if (key === name) return
+      const moduleValue = moduleItem[key]
+      if (moduleValue) {
+        moduleItem[name] = moduleValue
+        delete moduleItem[key]
+      }
+    })
+  })
+}
+
 type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
 async function getApiData(url: string, dictList: DictList[]) {
   return new Promise<ApiData>(async (resolve, reject) => {
@@ -187,7 +239,10 @@ async function getApiData(url: string, dictList: DictList[]) {
             reject('swagger2.0 to openapi3.0 error')
             return
           }
-          resolve({ json: options.openapi, dictList: newDictList })
+          const json = options.openapi as OpenAPIV3.Document
+          formatOpenapi3Name(json)
+          // fs.writeFileSync(path.join(__dirname, '../mock/swagger2openapi3.json'), JSON.stringify(options.openapi))
+          resolve({ json, dictList: newDictList })
         })
       } else {
         const { dictList: newDictList } = await translateV3(data, dictList)

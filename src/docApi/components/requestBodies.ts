@@ -19,16 +19,14 @@ export type RequestBodiesOp = {
 export default class RequestBodies extends TypeInfoBase {
   data: RequestBodiesOp['data']
   required?: boolean
-  moduleName: RequestBodiesOp['moduleName']
   contentType?: string
   additionalProperties?: boolean | ReferenceObject | SchemaObject
 
   // TODO BodyObject  的 required 是控制 body 的集合是否必传，但是 body 和 params 合并，应该没什么意义了。
   constructor(op: RequestBodiesOp) {
     const { parent, name, data, moduleName } = op
-    super(parent, name)
+    super(parent, name, moduleName)
     this.data = data
-    this.moduleName = moduleName
   }
 
   init() {

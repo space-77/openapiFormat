@@ -7,13 +7,11 @@ export type CustomObject = Omit<ParameterObject, 'in'>
 export type CustomOp = { parent: Components; name: string; datas: CustomObject[]; moduleName: ModuleName }
 export default class Custom extends TypeInfoBase {
   datas: CustomOp['datas']
-  moduleName: ModuleName
 
   constructor(op: CustomOp) {
     const { parent, name, datas, moduleName } = op
-    super(parent, name)
+    super(parent, name, moduleName)
     this.datas = datas
-    this.moduleName = moduleName
   }
 
   init = () => {

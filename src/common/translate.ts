@@ -10,15 +10,14 @@ export default class Translate {
 
   constructor(public dictList: DictList[] = []) {}
 
-  private dictHasKey(key: string) {
-    return this.dictList.some(i => i.zh === key)
-  }
+  // private dictHasKey(key: string) {
+  //   return this.dictList.some(i => i.zh === key)
+  // }
 
-  private startCaseClassName(textEn: string) {
-    // 缓存到电脑某个位置的缓存区域
+  static startCaseClassName(textEn: string) {
     let wordArray = _.startCase(textEn).split(' ')
-    if (wordArray.length > 6) {
-      wordArray = [...wordArray.slice(0, 5), ...wordArray.slice(-1)]
+    if (wordArray.length > 5) {
+      wordArray = [...wordArray.slice(0, 4), ...wordArray.slice(-1)]
     }
 
     // 处理以数字开头的异常
@@ -37,7 +36,7 @@ export default class Translate {
     try {
       const resList = await this.engines[engineIndex](texts.map(i => i.text))
       resList.forEach((i, index) => {
-        i.en = this.startCaseClassName(i.en)
+        i.en = Translate.startCaseClassName(i.en)
         this.dictList.push(i)
         texts[index].resolve(i.en)
       })

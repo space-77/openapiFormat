@@ -5,14 +5,12 @@ import type { SchemasData, SchemaObject, ReferenceObject } from '../../types/ope
 export type SchemasOp = { parent: Components; name: string; data: SchemasData; resConentType?: string; moduleName: ModuleName }
 export default class Schemas extends TypeInfoBase {
   data: SchemasOp['data']
-  moduleName: SchemasOp['moduleName']
   resConentType?: string
 
   constructor(op: SchemasOp) {
     const { parent, name, data, resConentType, moduleName } = op
-    super(parent, name)
+    super(parent, name, moduleName)
     this.data = data
-    this.moduleName = moduleName
     this.resConentType = resConentType
   }
 
