@@ -227,10 +227,16 @@ function formatOpenapi3Name(json: any) {
 }
 
 type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
-async function getApiData(url: string, dictList: DictList[]) {
+async function getApiData(url: string | object, dictList: DictList[]) {
   return new Promise<ApiData>(async (resolve, reject) => {
     try {
-      const { data } = await axios.get(url)
+      let data: any = null
+      if (_.isObject(url)) {
+        data = url
+      } else {
+        const res = await axios.get(url)
+        data = res.data
+      }
       if (data.swagger === '2.0') {
         const { dictList: newDictList } = await translate(data, dictList)
         // fs.writeFileSync(path.join(__dirname, '../mock/swagger2.json'), JSON.stringify(data))
@@ -255,7 +261,7 @@ async function getApiData(url: string, dictList: DictList[]) {
   })
 }
 
-export default async function (url: string, dictList: DictList[] = []) {
+export default async function (url: string | object, dictList: DictList[] = []) {
   try {
     const res = await getApiData(url, dictList)
 
