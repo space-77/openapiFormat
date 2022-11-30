@@ -19,6 +19,7 @@ function translateTagNames(options: TagNamesOp) {
   const { tags, subject, t, data } = options
   tags.map(async text => {
     const tag = tagsList.find(i => i.text === text)
+    if (!text.split('').some(isChinese)) return
     if (!tag) {
       const tagItem = { subjects: [subject], text, textEn: '' }
       tagsList.push(tagItem)

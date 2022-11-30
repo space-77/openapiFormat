@@ -1,6 +1,6 @@
 {
   "name": "doc-pre-data",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "整理openapi数据",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -42,7 +42,6 @@
   "dependencies": {
     "axios": "*",
     "balanced-match": "^2.0.0",
-    "cheerio": "1.0.0-rc.12",
     "deep-for-each": "^3.0.0",
     "is-chinese": "^1.4.8",
     "is-es2016-keyword": "^1.0.0",
