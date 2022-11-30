@@ -89,8 +89,16 @@ async function translate(data: any, dictList: DictList[]) {
     }
   }
 
-  deepForEach(data, (value: any, key: string, subject: Subject) => {
-    promsList.push(forEachProm(value, key, subject))
+  deepForEach(data, (value: any, key: string, subject: any) => {
+    if (key === 'originalRef' || key === 'tags') {
+      promsList.push(forEachProm(value, key, subject))
+    } else if (key === 'in' && value === 'path') {
+      if (!subject.required) {
+        console.warn(`路径参数异常 ${subject.name}, path 参数必须为必传， 已修正。`)
+        subject.required = true
+      }
+    }
+
   })
 
   await t.translate()
