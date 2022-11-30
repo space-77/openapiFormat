@@ -92,13 +92,7 @@ async function translate(data: any, dictList: DictList[]) {
   deepForEach(data, (value: any, key: string, subject: any) => {
     if (key === 'originalRef' || key === 'tags') {
       promsList.push(forEachProm(value, key, subject))
-    } else if (key === 'in' && value === 'path') {
-      if (!subject.required) {
-        console.warn(`路径参数异常 ${subject.name}, path 参数必须为必传， 已修正。`)
-        subject.required = true
-      }
     }
-
   })
 
   await t.translate()
@@ -210,6 +204,51 @@ function formatOpenapi3Name(json: any) {
   })
 }
 
+function fixConvertErr(json: any) {
+  deepForEach(json.paths, (value: any, key: string, subject: any) => {
+    if (key === 'parameters' && Array.isArray(value)) {
+      const bodyParams = value.filter(i => i.in === 'body')
+      if (bodyParams.length > 1) {
+        // 异常数据
+        // 修复异常数据结构
+
+        console.warn(`数据结构异常：${subject.operationId}，parameters里存在${bodyParams.length}个body数据，已修正。`)
+
+        const names = Object.keys(json.definitions)
+        const parameters = value.filter(i => i.in !== 'body')
+        let name = `M${subject.operationId}Body`
+        name = checkName(name, n => names.includes(n))
+        const schema = { originalRef: name, $ref: `#/definitions/${name}` }
+        const bodyRef = { required: true, in: 'body', name, description: name, schema }
+        parameters.push(bodyRef)
+        subject.parameters = parameters
+
+        // 添加 definition
+        const required: string[] = []
+        const properties: Record<string, string> = {}
+        bodyParams.forEach(i => {
+          if (i.required) required.push(i.name)
+          properties[i.name] = { ...i.schema, description: i.description }
+        })
+        const definition = {
+          type: 'object',
+          required,
+          properties,
+          title: '报事报修处理记录业务',
+          description: '报事报修处理记录业务AddDTO'
+        }
+
+        json.definitions[name] = definition
+      }
+    } else if (key === 'in' && value === 'path') {
+      if (!subject.required) {
+        console.warn(`路径参数异常 ${subject.name}, path 参数必须为必传， 已修正。`)
+        subject.required = true
+      }
+    }
+  })
+}
+
 type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
 async function getApiData(url: string | object, dictList: DictList[]) {
   return new Promise<ApiData>(async (resolve, reject) => {
@@ -222,6 +261,7 @@ async function getApiData(url: string | object, dictList: DictList[]) {
         data = res.data
       }
       if (data.swagger === '2.0') {
+        fixConvertErr(data)
         const { dictList: newDictList } = await translate(data, dictList)
         converter.convertObj(data, { components: true }, function (err: any, options: any) {
           if (err) {
