@@ -34,6 +34,7 @@ export default class TypeItem {
   minLength?: number
   maxLength?: number
   format?: string
+  disable: boolean
   /** 泛型入参 */
   ref?: TypeItemOption['ref']
   // genericsItem?: string | ComponentsBase | TypeItem /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
@@ -70,6 +71,7 @@ export default class TypeItem {
     this.externalDocs = externalDocs
     this.minLength = minLength
     this.maxLength = maxLength
+    this.disable = false
   }
 
   getKeyValue() {
@@ -87,7 +89,7 @@ export default class TypeItem {
         content = type
       }
     } else if (type instanceof ComponentsBase) {
-      content = type.typeName
+      content = type.getRealBody().typeName
     } else if (!nullable) {
       content = 'any'
     }

@@ -128,7 +128,7 @@ export default class Components {
     })
   }
 
-  addCustomType(name: string, types: CustomObject[]) {
+  addCustomType(name: string, types: CustomObject[] | string) {
     const option: CustomOp = { parent: this, name, datas: types, moduleName: 'custom' }
     const typeInfo = new Custom(option)
     this.pushTypeItem(typeInfo)

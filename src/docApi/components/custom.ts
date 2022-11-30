@@ -4,14 +4,19 @@ import type { ParameterObject } from '../../types/openapi'
 
 export type CustomObject = Omit<ParameterObject, 'in'>
 
-export type CustomOp = { parent: Components; name: string; datas: CustomObject[]; moduleName: ModuleName }
+export type CustomOp = { parent: Components; name: string; datas: CustomObject[] | string; moduleName: ModuleName }
 export default class Custom extends TypeInfoBase {
-  datas: CustomOp['datas']
+  datas: CustomObject[] = []
+  typeValue?: string
 
   constructor(op: CustomOp) {
     const { parent, name, datas, moduleName } = op
     super(parent, name, moduleName)
-    this.datas = datas
+    if (Array.isArray(datas)) {
+      this.datas = datas
+    } else {
+      this.typeValue = datas
+    }
   }
 
   init = () => {

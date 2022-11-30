@@ -11,10 +11,10 @@ import {
   SchemasData
 } from '../../types/openapi'
 import _ from 'lodash'
+import TypeItem from '../typeItem'
 import Schemas, { SchemasOp } from './schemas'
 import Components, { ModuleName } from '../components'
 import { firstToUpper } from '../../common/utils'
-import TypeItem from '../typeItem'
 
 // FIXME 类型继承，可能会存在这种怪异类型
 // interface TypeName extends Array<number> {
@@ -33,17 +33,35 @@ export default abstract class TypeInfoBase {
   // 继承类型的泛型入参 interface TypeName extends Array<number> {}
   refs: RefItem[] = []
   attrs: Record<string, any> = {} // 自定义属性
+  realBody?: TypeInfoBase // 真实的引用
+  // childrenRefs: TypeInfoBase[] = [] // 该类型被其它类型引用
   /** 外部链接描叙 */
   externalDocs?: ExternalDocumentationObject
   resConentType?: string
 
   get isEmpty(): boolean {
     const { typeItems, refs } = this
-    return refs.every(i => i.typeInfo.isEmpty && i.typeInfo?.typeName !== 'Array') && typeItems.length === 0
+    return (
+      refs.every(i => i.typeInfo.isEmpty && i.typeInfo?.typeName !== 'Array') &&
+      typeItems.filter(i => !i.disable).length === 0
+    )
   }
 
   constructor(protected parent: Components, public name: string, public moduleName: ModuleName) {
     this.typeName = parent.checkName(firstToUpper(name))
+  }
+
+  /**
+   * @desc 获取真实类型，跳过空类型引用
+   * 例如： C extends B, B extends A, 如果 B 和 C 都是空类型，那么调用 C 和 B 类型其实就是调用 A 类型
+   */
+  getRealBody(): TypeInfoBase {
+    const typeItems = this.typeItems.filter(i => !i.disable)
+    // 只有一个应用类型，并且没有子类型，并且有添加过真实类型的才可以往上去父类作为自己的类型
+    if (this.refs.length === 1 && typeItems.length === 0 && this.realBody) {
+      return this.realBody.getRealBody()
+    }
+    return this
   }
 
   getAllRefs(): RefItem[] {
@@ -62,14 +80,12 @@ export default abstract class TypeInfoBase {
     }
   }
 
-  getTypeItems(): TypeItem[] {
+  getTypeItems = (): TypeItem[] => {
     const allTypesList: TypeItem[] = [...this.typeItems]
     const allRef = _.uniq(_.flattenDeep(this.getAllRefs()))
     allRef.forEach(i => {
       const { typeItems } = i.typeInfo
-      if (typeItems.length > 0) {
-        allTypesList.push(...typeItems)
-      }
+      if (typeItems.length > 0) allTypesList.push(...typeItems)
     })
 
     return _.uniq(allTypesList).map(i => {
@@ -103,7 +119,12 @@ export default abstract class TypeInfoBase {
   protected pushRef(ref?: string, genericsItem?: TypeInfoBase) {
     if (!ref) return
     const typeInfo = this.findRefType(ref)
-    if (typeInfo) this.refs.push({ typeInfo, genericsItem })
+
+    if (typeInfo) {
+      this.realBody = typeInfo
+      // typeInfo.childrenRefs.push(this)
+      this.refs.push({ typeInfo, genericsItem })
+    }
   }
 
   protected createGenericsTypeinfo(items: ReferenceObject | SchemaObject, name: string): RefItem {
