@@ -4,7 +4,17 @@ import ComponentsBase from './components/base'
 import type { OpenAPIV3 } from 'openapi-types'
 import { OperationObject } from '../types/openapi'
 import { HttpMethods, httpMethods } from '../common'
-import { checkName, firstToUpper, getIdentifierFromUrl, getMaxSamePath, getSamePath } from '../common/utils'
+import {
+  checkName,
+  firstToUpper,
+  getIdentifierFromUrl,
+  getMaxSamePath,
+  getSamePath,
+  transformCamelCase
+} from '../common/utils'
+import _ from 'lodash'
+
+const isChinese = require('is-chinese')
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -63,6 +73,10 @@ export default class DocApi {
     const { json } = this
     const { tags: tagList = [], paths } = json
 
+    // 兼容某些项目把swagger tag的name和description弄反的情况
+    // 当检测到name包含中文的时候，采用description
+    const flip = tagList.map(i => i.name).some(i => i.split('').some(isChinese))
+
     const moduleList: FuncGroup[] = []
     const funData = Object.entries(paths)
 
@@ -73,13 +87,25 @@ export default class DocApi {
         const item = pathsObject[method] as OperationObject | undefined
         if (!item) continue
 
-        const { tags = ['moduleDef'] } = item
+        const { tags = ['index'] } = item
         const funItem: FuncGroupItem = { item, apiPath, method, tags }
         tags.forEach(tag => {
           const moduleItem = moduleList.find(i => i.moduleName === tag)
           if (!moduleItem) {
-            const tagInfo = tagList.find(i => i.name === tag)
-            moduleList.push({ moduleName: tag, funs: [funItem], tagInfo })
+            const tagInfo = (tagList.find(i => i.name === tag) as FuncGroup['tagInfo']) ?? {
+              name: 'index',
+              description: ''
+            }
+
+            if (flip) {
+              const { description = 'index' } = tagInfo
+              tagInfo.description = tagInfo.name
+              tagInfo.name = description
+            }
+
+            const moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name))
+
+            moduleList.push({ moduleName, funs: [funItem], tagInfo })
           } else {
             moduleItem.funs.push(funItem)
           }
@@ -87,13 +113,19 @@ export default class DocApi {
       }
     }
 
-    // 优化模块名字
-    moduleList.forEach(mod => {
-      const moduleName = Translate.startCaseClassName(mod.moduleName, 3)
-      // 保证模块名字唯一性
-      const names = moduleList.filter(i => i !== mod).map(i => i.moduleName)
-      mod.moduleName = checkName(moduleName, n => names.includes(n))
-    })
+    // const rootSamePath = getMaxSamePath(Object.keys(json.paths).map(path => path.slice(1)))
+
+    // // 优化模块名字
+    // moduleList.forEach(mod => {
+    //   const { funs } = mod
+    //   const [samePath] = _.startCase(getSamePath(funs.map(i => i.apiPath.replace(rootSamePath, '')))).split(' ')
+    //   let moduleName = Translate.startCaseClassName(samePath, 3) || mod.moduleName
+
+    //   // 保证模块名字唯一性
+    //   const names = moduleList.map(i => i.moduleName)
+    //   moduleName = checkName(moduleName, n => names.includes(n))
+    //   mod.moduleName = moduleName
+    // })
 
     return moduleList
   }

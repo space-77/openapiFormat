@@ -88,7 +88,7 @@ async function translate(data: any, dictList: DictList[]) {
         await addTranslate(text, subject)
       })
     } else if (key === 'tags' && subject !== data && Array.isArray(value) && value.length > 0) {
-      translateTagNames({ t, tags: value, subject: subject as any, data })
+      // translateTagNames({ t, tags: value, subject: subject as any, data })
     }
   }
 
@@ -134,7 +134,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
         subject.$ref = subject.$ref.replace(refNname, textEn)
       }
     } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
-      translateTagNames({ t, tags: value, subject: subject as any, data })
+      // translateTagNames({ t, tags: value, subject: subject as any, data })
     }
   })
 

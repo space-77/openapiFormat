@@ -157,35 +157,35 @@ export function checkTsTypeKeyword(typeName: string): string {
   return typeName
 }
 
-// export function getGenerics4TypeItem(item: TypeItem): string {
-//   // console.log({ enumTypes })
-//   const { type, genericsItem, enumTypes } = item
-//   if (genericsItem) {
-//     if (genericsItem instanceof TypeItem) {
-//       return `<${type}<${getGenerics4TypeItem(genericsItem)}>>`
-//     } else if (typeof genericsItem === 'string') {
-//       return `<${type}<${genericsItem}>>`
-//     } else {
-//       const { typeName } = genericsItem
-//       return `<${type}<${typeName}>>`
-//     }
-//   } else if (typeof type === 'string') {
-//     return `<${getEnumType(type, enumTypes)}>`
-//   }
-//   console.log(JSON.stringify(item))
-//   return ''
-// }
+export function transformCamelCase(name: string) {
+  let words: string[] = []
+  let result = ''
 
-// export function getGenericsType(generics: TypeItem['genericsItem'], enumTypes: any[] = []) {
-//   if (!generics) return ''
-//   if (typeof generics === 'string') {
-//     return `<${getEnumType(generics, enumTypes)}>`
-//   } else if (generics instanceof TypeItem) {
-//     // 泛型 为 schema 类型,
-//     // TODO 泛型包泛型
-//     return getGenerics4TypeItem(generics)
-//   }
-//   // 泛型 为 引用类型
-//   const { typeName } = generics as ComponentsBase
-//   return `<${typeName}>`
-// }
+  if (name.includes('-')) {
+    words = name.split('-')
+  } else if (name.includes(' ')) {
+    words = name.split(' ')
+  } else {
+    if (typeof name === 'string') {
+      result = name
+    } else {
+      throw new Error('mod name is not a string: ' + name)
+    }
+  }
+
+  if (words && words.length) {
+    result = words
+      .map(word => {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      })
+      .join('')
+  }
+
+  result = result.charAt(0).toLowerCase() + result.slice(1)
+
+  if (result.endsWith('Controller')) {
+    result = result.slice(0, result.length - 'Controller'.length)
+  }
+
+  return result
+}
