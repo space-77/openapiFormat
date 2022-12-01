@@ -14,7 +14,7 @@ import _ from 'lodash'
 import TypeItem from '../typeItem'
 import Schemas, { SchemasOp } from './schemas'
 import Components, { ModuleName } from '../components'
-import { firstToUpper } from '../../common/utils'
+import { firstToUpper, checkTsTypeKeyword } from '../../common/utils'
 
 // FIXME 类型继承，可能会存在这种怪异类型
 // interface TypeName extends Array<number> {
@@ -48,7 +48,7 @@ export default abstract class TypeInfoBase {
   }
 
   constructor(protected parent: Components, public name: string, public moduleName: ModuleName) {
-    this.typeName = parent.checkName(firstToUpper(name))
+    this.typeName = parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
   }
 
   /**

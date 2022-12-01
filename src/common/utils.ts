@@ -112,22 +112,50 @@ export function checkName(name: string, checkFun: (name: string) => boolean): st
   return name
 }
 
-// // File
-// // URLSearchParams
-// // AbortController
-// // ArrayBuffer
+const tsKeyword = new Set([
+  'URL',
+  'File',
+  'Blob',
+  'JSON',
+  'Date',
+  'Array',
+  'String',
+  'RegExp',
+  'Object',
+  'Number',
+  'Boolean',
+  'Promise',
+  'Function',
+  'ArrayBuffer',
+  'URLSearchParams',
 
-// /**
-//  * @description 监测需要定义的类型名字是不是Ts已经使用的名称，如 File, URL, URLSearchParams 等等
-//  */
-// function isTsKeyword(text: string): boolean {
+  // ts 映射类型  https://www.typescriptlang.org/docs/handbook/utility-types.html
+  'Omit',
+  'Pick',
+  'Record',
+  'Awaited',
+  'Partial',
+  'Exclude',
+  'Extract',
+  'Required',
+  'ThisType',
+  'Readonly',
+  'Parameters',
+  'ReturnType',
+  'NonNullable',
+  'InstanceType',
+  'ThisParameterType',
+  'OmitThisParameter',
+  'ConstructorParameters'
+])
 
-//   // isJsKeyword
-//   // const keys = ['type','interface', 'keyof', 'in', 'as', 'infer', 'implements', ]
-//   // const keys2 = ['abstract', 'package', 'private', 'protected', 'public', 'static', 'declare', 'get', 'module', 'require']
-//   const typeKeys = ['AbortController', ]
-
-// }
+/**
+ * @description 监测需要定义的类型名字是不是Ts已经使用的名称，如 File, URL, URLSearchParams 等等
+ */
+export function checkTsTypeKeyword(typeName: string): string {
+  if (tsKeyword.has(typeName)) return `My${typeName}`
+  return typeName
+}
 
 // export function getGenerics4TypeItem(item: TypeItem): string {
 //   // console.log({ enumTypes })
