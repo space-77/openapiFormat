@@ -101,9 +101,10 @@ export default abstract class TypeInfoBase {
 
   abstract init(): void
 
-  protected getType(type?: SchemaObjectType, ref?: string): TypeItem['type'] {
+  protected getType(type?: SchemaObjectType | 'file', ref?: string): TypeItem['type'] {
     if (ref) return this.findRefType(ref)
     if (!type) return 'any'
+    if (type === 'file') return 'File'
     if (type === 'array') return 'Array'
     if (type === 'integer') return 'number'
     return type
