@@ -87,18 +87,12 @@ export default class DocApi {
       }
     }
 
-    const rootSamePath = getMaxSamePath(Object.keys(json.paths).map(path => path.slice(1)))
-
     // 优化模块名字
     moduleList.forEach(mod => {
-      const { funs } = mod
-      const samePath = getSamePath(funs.map(i => i.apiPath.replace(rootSamePath, '')))
-      let moduleName = Translate.startCaseClassName(samePath, 3) || mod.moduleName
-
+      const moduleName = Translate.startCaseClassName(mod.moduleName, 3)
       // 保证模块名字唯一性
-      const names = moduleList.map(i => i.moduleName)
-      moduleName = checkName(moduleName, n => names.includes(n))
-      mod.moduleName = moduleName
+      const names = moduleList.filter(i => i !== mod).map(i => i.moduleName)
+      mod.moduleName = checkName(moduleName, n => names.includes(n))
     })
 
     return moduleList

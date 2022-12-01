@@ -15,7 +15,7 @@ type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string 
 
 const tagsList: TagsList[] = []
 type TagNamesOp = { tags: string[]; subject: { tags: string[] }; t: Translate; data: any }
-function translateTagNames(options: TagNamesOp) {
+function translateTagNames(options: TagNamesOp) { 
   const { tags, subject, t, data } = options
   tags.map(async text => {
     const tag = tagsList.find(i => i.text === text)
@@ -32,7 +32,10 @@ function translateTagNames(options: TagNamesOp) {
         const index = subject.tags.findIndex(i => i === text)
         if (index > -1) subject.tags[index] = textEn // 替换原有的 tag 名称
         data.tags.forEach((tag: any) => {
-          if (tag.name === text) tag.name = textEn
+          if (tag.name === text) {
+            tag.tagName = tag.name
+            tag.name = textEn
+          }
         })
       })
     } else {
