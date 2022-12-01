@@ -40,6 +40,7 @@ export type FuncGroupList = {
 
 export type FuncGroupItem = { item: OperationObject; apiPath: string; method: HttpMethods; tags: string[] }
 export type FuncGroup = {
+  tag: string
   funs: FuncGroupItem[]
   moduleName: string
   tagInfo?: OpenAPIV3.TagObject
@@ -90,7 +91,7 @@ export default class DocApi {
         const { tags = ['index'] } = item
         const funItem: FuncGroupItem = { item, apiPath, method, tags }
         tags.forEach(tag => {
-          const moduleItem = moduleList.find(i => i.moduleName === tag)
+          const moduleItem = moduleList.find(i => i.tag === tag)
           if (!moduleItem) {
             const tagInfo = (tagList.find(i => i.name === tag) as FuncGroup['tagInfo']) ?? {
               name: 'index',
@@ -105,7 +106,7 @@ export default class DocApi {
 
             const moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name))
 
-            moduleList.push({ moduleName, funs: [funItem], tagInfo })
+            moduleList.push({ moduleName, tag, funs: [funItem], tagInfo })
           } else {
             moduleItem.funs.push(funItem)
           }
