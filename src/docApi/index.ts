@@ -93,7 +93,7 @@ export default class DocApi {
     moduleList.forEach(mod => {
       const { funs } = mod
       const samePath = getSamePath(funs.map(i => i.apiPath.replace(rootSamePath, '')))
-      let moduleName = Translate.startCaseClassName(samePath) || mod.moduleName
+      let moduleName = Translate.startCaseClassName(samePath, 3) || mod.moduleName
 
       // 保证模块名字唯一性
       const names = moduleList.map(i => i.moduleName)

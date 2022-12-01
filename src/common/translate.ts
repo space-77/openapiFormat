@@ -14,10 +14,10 @@ export default class Translate {
   //   return this.dictList.some(i => i.zh === key)
   // }
 
-  static startCaseClassName(textEn: string) {
+  static startCaseClassName(textEn: string, maxWordLen = 5) {
     let wordArray = _.startCase(textEn).split(' ')
-    if (wordArray.length > 5) {
-      wordArray = [...wordArray.slice(0, 4), ...wordArray.slice(-1)]
+    if (wordArray.length > maxWordLen) {
+      wordArray = [...wordArray.slice(0, maxWordLen - 1), ...wordArray.slice(-1)]
     }
 
     // 处理以数字开头的异常
