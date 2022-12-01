@@ -4,7 +4,7 @@ import ComponentsBase from './components/base'
 import type { OpenAPIV3 } from 'openapi-types'
 import { OperationObject } from '../types/openapi'
 import { HttpMethods, httpMethods } from '../common'
-import { checkName, firstToUpper, getIdentifierFromUrl, getMaxSamePath } from '../common/utils'
+import { checkName, firstToUpper, getIdentifierFromUrl, getMaxSamePath, getSamePath } from '../common/utils'
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -86,6 +86,16 @@ export default class DocApi {
         })
       }
     }
+
+    const rootSamePath = getMaxSamePath(Object.keys(json.paths).map(path => path.slice(1)))
+
+    // 优化模块名字
+    moduleList.forEach(mod => {
+      const { funs } = mod
+      const samePath = getSamePath(funs.map(i => i.apiPath.replace(rootSamePath, '')))
+      const moduleName = Translate.startCaseClassName(samePath)
+      if (moduleName) mod.moduleName = moduleName
+    })
 
     return moduleList
   }

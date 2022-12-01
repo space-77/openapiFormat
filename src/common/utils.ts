@@ -29,6 +29,26 @@ export function getMaxSamePath(paths: string[], samePath = ''): string {
   return samePath
 }
 
+export function getSamePath(paths: string[]) {
+  let samePaths: string[] = []
+  const pathItems = paths.map(path => path.split('/'))
+
+  const minLength = Math.min(...pathItems.map(i => i.length))
+  if (minLength <= 0) return samePaths.join('/')
+
+  for (let i = 0; i < minLength; i++) {
+    const consult = pathItems[0][i]
+    const equal = pathItems.every(pathItem => pathItem[i] === consult)
+    if (equal) {
+      samePaths.push(consult)
+    } else {
+      break
+    }
+  }
+
+  return samePaths.join('/')
+}
+
 export function toUpperFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
@@ -101,12 +121,11 @@ export function checkName(name: string, checkFun: (name: string) => boolean): st
 //  * @description 监测需要定义的类型名字是不是Ts已经使用的名称，如 File, URL, URLSearchParams 等等
 //  */
 // function isTsKeyword(text: string): boolean {
-  
+
 //   // isJsKeyword
 //   // const keys = ['type','interface', 'keyof', 'in', 'as', 'infer', 'implements', ]
 //   // const keys2 = ['abstract', 'package', 'private', 'protected', 'public', 'static', 'declare', 'get', 'module', 'require']
 //   const typeKeys = ['AbortController', ]
-
 
 // }
 
