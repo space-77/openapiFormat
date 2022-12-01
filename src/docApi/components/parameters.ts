@@ -5,14 +5,20 @@ import type { SchemaObject, ParameterObject, ReferenceObject } from '../../types
 export type Schema = ReferenceObject & SchemaObject
 export type ParametersData = ReferenceObject | ParameterObject
 
-export type ParametersOp = { parent: Components; name: string; datas: ParametersData[]; moduleName: ModuleName }
+export type ParametersOp = {
+  parent: Components
+  name: string
+  datas: ParametersData[]
+  moduleName: ModuleName
+  isTsType?: boolean
+}
 export default class Parameters extends TypeInfoBase {
   datas: ParametersOp['datas']
   additionalProperties: any
 
   constructor(op: ParametersOp) {
-    const { moduleName, parent, name, datas } = op
-    super(parent, name, moduleName)
+    const { moduleName, parent, name, datas, isTsType } = op
+    super(parent, name, moduleName, isTsType)
     this.datas = datas
   }
 

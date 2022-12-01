@@ -20,7 +20,7 @@ import { firstToUpper, checkTsTypeKeyword } from '../../common/utils'
 // interface TypeName extends Array<number> {
 //   test: ''
 // }
-export type RefItem = { typeInfo: TypeInfoBase; genericsItem?: TypeInfoBase | string }
+export type RefItem = { typeInfo: TypeInfoBase; genericsItem?: TypeInfoBase | string; isTsType?: boolean }
 
 const baseRef = '#/components/'
 export default abstract class TypeInfoBase {
@@ -47,8 +47,8 @@ export default abstract class TypeInfoBase {
     )
   }
 
-  constructor(protected parent: Components, public name: string, public moduleName: ModuleName) {
-    this.typeName = parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
+  constructor(protected parent: Components, public name: string, public moduleName: ModuleName, isTsType = false) {
+    this.typeName = isTsType ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
   }
 
   /**
@@ -135,7 +135,7 @@ export default abstract class TypeInfoBase {
     const { type } = items as SchemaObject
     const { $ref } = items as ReferenceObject
     const { items: cItems } = items as ArraySchemaObject
-    const option: SchemasOp = { parent, name: 'Array', data: items, moduleName: 'schemas' }
+    const option: SchemasOp = { parent, name: 'Array', data: items, moduleName: 'schemas', isTsType: true }
     const typeInfo = new Schemas(option) // 创建 ts 原生 Array【用于类型继承，不会生成类型】
     let genericsItem: TypeInfoBase | string | undefined = 'any'
     if ($ref) {
