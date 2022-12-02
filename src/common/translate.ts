@@ -15,7 +15,7 @@ export default class Translate {
   // }
 
   static startCaseClassName(textEn: string, maxWordLen = 5) {
-    let wordArray = _.startCase(textEn).split(' ')
+    let wordArray = _.startCase(textEn).split(' ').filter(Boolean)
     if (wordArray.length > maxWordLen) {
       wordArray = [...wordArray.slice(0, maxWordLen - 1), ...wordArray.slice(-1)]
     }
