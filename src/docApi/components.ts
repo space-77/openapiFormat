@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { PathItem } from './index'
 import Schemas, { SchemasOp } from './components/schemas'
 import Responses from './components/Responses'
@@ -125,6 +126,16 @@ export default class Components {
   private formatCode() {
     this.typeInfoList.forEach(i => {
       i.typeInfo.init()
+    })
+
+    // 类型初始化完后处理 allOf, anyOf, oneOf 相关逻辑
+    this.typeInfoList.forEach(({ typeInfo }) => {
+      const { allOf, anyOf, oneOf, typeItems } = typeInfo
+
+      // allOf ,所有类型结合在一起
+      typeItems.push(..._.flatten(allOf))
+
+      typeInfo.typeItems = _.uniqBy(typeItems, 'name')
     })
   }
 

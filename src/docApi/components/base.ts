@@ -27,6 +27,9 @@ export default abstract class TypeInfoBase {
   title?: string
   typeName: string
   typeItems: TypeItem[] = []
+  allOf: TypeItem[][] = [] // 所有类型组合在一起
+  anyOf: TypeItem[][] = [] // TODO，任意一个
+  oneOf: TypeItem[][] = [] // TODO，其中一个
   deprecated?: boolean
   description?: string
   // moduleName: ModuleName
@@ -152,9 +155,36 @@ export default abstract class TypeInfoBase {
     return { typeInfo, genericsItem }
   }
 
+  // 生成 allOf, anyOf, oneOf 所需的引用类型
+  getTypeItem4List(items: SchemasData[] = []) {
+    const typeItemList: TypeItem[][] = []
+    items.forEach(item => {
+      const { $ref } = item as ReferenceObject
+      if ($ref) {
+        // 此时的 typeItems 可能还没构建，在 Components.formatCode() 方法执行初始化方法是，存在应用类型没初始化可能
+        // 这时候拿到 typeItems 应用类型地址即可，使用的时候所有类型都已经初始化了，再打平
+        const { typeItems = [] } = this.findRefType($ref) ?? {}
+        typeItemList.push(typeItems)
+      } else {
+        const typeItems = this.createSchemaTypeItem(item as SchemaObject, 'no-name')
+        typeItemList.push(typeItems)
+      }
+    })
+
+    return typeItemList
+  }
+
   protected createSchemaTypeItem(schema: SchemaObject, name: string): TypeItem[] {
     const { items } = schema as Partial<ArraySchemaObject>
-    const { properties, additionalProperties, required = [], type } = schema
+    const { properties, additionalProperties, required = [], type, allOf, anyOf, oneOf } = schema
+
+    const allOfList = this.getTypeItem4List(allOf)
+    const anyOfList = this.getTypeItem4List(anyOf)
+    const oneOfList = this.getTypeItem4List(oneOf)
+
+    this.allOf.push(...allOfList)
+    this.allOf.push(...anyOfList)
+    this.allOf.push(...oneOfList)
 
     // 泛型逻辑
     if (items) {
