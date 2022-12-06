@@ -29,6 +29,8 @@ const url = 'http://114.115.202.183:8088/v2/api-docs'
 // const url = 'https://petstore.swagger.io/v2/swagger.json'
 // const url = 'https://generator3.swagger.io/openapi.json'
 // const url = 'https://mock.mengxuegu.com/mock/6384cdec9433403d6c06894e/openapi3/mock'
+
+const json = require(path.join(__dirname, '../mock/api-docs.json'))
 // // const openapi = new OpenApi(url)
 const dictPath = path.join(__dirname, '../mock/translate.json')
 ~(async () => {
@@ -36,7 +38,7 @@ const dictPath = path.join(__dirname, '../mock/translate.json')
     // const dictList: any[] = require(dictPath)
     const dictList: any[] = []
     // console.log(dictList)
-    const res = await docInit(url, dictList)
+    const res = await docInit(json, dictList)
     // console.log('----------')
     // console.log('----------')
     // console.log('----------')
