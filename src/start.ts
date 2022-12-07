@@ -14,30 +14,51 @@ type TextList = { subjects: Subject[]; text: string; textEn?: string }
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string }
 
 const tagsList: TagsList[] = []
-type TagNamesOp = { tags: string[]; subject: { tags: string[] }; t: Translate; data: any }
-function translateTagNames(options: TagNamesOp) { 
+type TagNamesOp = { tags: string[]; subject: { tags: string[] }; t: Translate; data: OpenAPIV3.Document }
+function translateTagNames(options: TagNamesOp) {
   const { tags, subject, t, data } = options
+  const { tags: tagList = [] } = data
+
   tags.map(async text => {
     const tag = tagsList.find(i => i.text === text)
-    if (!text.split('').some(isChinese)) return
+    if (!text.split('').some(isChinese)) {
+      // 英文
+      const tagInfo = data.tags?.find(i => i.name === text)
+
+      // 如果 openapi.tags 没找到对应的tag,则需要添加
+      if (!tagInfo) {
+        if (!Array.isArray(data.tags)) data.tags = []
+        data.tags.push({ name: text, description: text })
+      }
+
+      // 模块名为英文，不需要翻译
+      return
+    }
     if (!tag) {
       const tagItem = { subjects: [subject], text, textEn: '' }
       tagsList.push(tagItem)
 
       let textEn = await t.addTranslate(text)
       textEn = checkName(textEn, name => tagsList.some(i => i.textEn === name))
-      tagItem.textEn = textEn
+
+      const tagInfo = tagList.find(tag => tag.name === text)
+      if (!tagInfo) {
+        if (!Array.isArray(data.tags)) data.tags = []
+        // 可能存在英文名字，需要检查一下
+        textEn = checkName(textEn, n => !!data.tags!.find(i => i.name === n))
+        const tag = { name: textEn, description: text }
+        data.tags.push(tag)
+      } else {
+        tagInfo.name = textEn
+        tagInfo.description = text
+      }
 
       tagItem.subjects.forEach(subject => {
         const index = subject.tags.findIndex(i => i === text)
         if (index > -1) subject.tags[index] = textEn // 替换原有的 tag 名称
-        data.tags.forEach((tag: any) => {
-          if (tag.name === text) {
-            tag.tagName = tag.name
-            tag.name = textEn
-          }
-        })
       })
+
+      tagItem.textEn = textEn
     } else {
       tag.subjects.push(subject as any)
     }
@@ -88,7 +109,7 @@ async function translate(data: any, dictList: DictList[]) {
         await addTranslate(text, subject)
       })
     } else if (key === 'tags' && subject !== data && Array.isArray(value) && value.length > 0) {
-      // translateTagNames({ t, tags: value, subject: subject as any, data })
+      translateTagNames({ t, tags: value, subject: subject as any, data })
     }
   }
 
@@ -124,7 +145,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
   const t = new Translate(dictList)
   const textEnList = new Set<string>([])
 
-  deepForEach(data, async (value: any, key: string, subject: Subject) => {
+  deepForEach(data, async (value: any, key: string, subject: any) => {
     if (key === '$ref' && typeof value === 'string' && value.startsWith('#/components/')) {
       const [, , typeInfoKey, refNname] = value.split('/')
       if (refNname.split('').some(isChinese)) {
@@ -134,7 +155,10 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
         subject.$ref = subject.$ref.replace(refNname, textEn)
       }
     } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
-      // translateTagNames({ t, tags: value, subject: subject as any, data })
+      translateTagNames({ t, tags: value, subject: subject as any, data })
+    } else if (key === 'operationId') {
+      // 处理 方法名带下横杠
+      subject.operationId = Translate.startCaseClassName(value)
     }
   })
 
