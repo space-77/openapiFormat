@@ -4,7 +4,7 @@ import Schemas, { SchemasOp } from './components/schemas'
 import Responses from './components/Responses'
 import Parameters, { ParametersOp } from './components/parameters'
 import RequestBodies, { RequestBodiesOp } from './components/requestBodies'
-import { checkName, firstToUpper } from '../common/utils'
+import { checkName } from '../common/utils'
 import TypeInfoBase from './components/base'
 import Custom, { CustomObject, CustomOp } from './components/custom'
 import type { Document, ResponseObject } from '../types/openapi'
@@ -134,8 +134,9 @@ export default class Components {
 
       // allOf ,所有类型结合在一起
       typeItems.push(..._.flatten(allOf))
+      typeInfo.typeItems = typeItems
 
-      typeInfo.typeItems = _.uniqBy(typeItems, 'name')
+      // TODO anyOf 和 oneOf 待适配
     })
   }
 

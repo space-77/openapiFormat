@@ -183,8 +183,8 @@ export default abstract class TypeInfoBase {
     const oneOfList = this.getTypeItem4List(oneOf)
 
     this.allOf.push(...allOfList)
-    this.allOf.push(...anyOfList)
-    this.allOf.push(...oneOfList)
+    this.anyOf.push(...anyOfList)
+    this.oneOf.push(...oneOfList)
 
     // 泛型逻辑
     if (items) {
