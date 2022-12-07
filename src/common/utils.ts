@@ -1,7 +1,5 @@
+import _ from 'lodash'
 import balanced from 'balanced-match'
-import ComponentsBase from '../docApi/components/base'
-import TypeItem from '../docApi/typeItem'
-const isJsKeyword = require('is-es2016-keyword')
 
 /**
  * @param str
@@ -29,24 +27,32 @@ export function getMaxSamePath(paths: string[], samePath = ''): string {
   return samePath
 }
 
-export function getSamePath(paths: string[]) {
-  let samePaths: string[] = []
-  const pathItems = paths.map(path => path.split('/'))
+export function getSameName(names: string[]) {
+  let sameNames: string[] = []
+  const nameItems = names.map(name => _.startCase(name).split(' '))
 
-  const minLength = Math.min(...pathItems.map(i => i.length))
-  if (minLength <= 0) return samePaths.join('/')
+  const minLength = Math.min(...nameItems.map(i => i.length))
+  if (minLength <= 0) return sameNames.join('/')
 
   for (let i = 0; i < minLength; i++) {
-    const consult = pathItems[0][i]
-    const equal = pathItems.every(pathItem => pathItem[i] === consult)
+    const consult = nameItems[0][i]
+    const equal = nameItems.every(nameList => nameList[i] === consult)
     if (equal) {
-      samePaths.push(consult)
+      sameNames.push(consult)
     } else {
       break
     }
   }
 
-  return samePaths.join('/')
+  let sameName = sameNames.join('')
+
+  if (names.some(name => sameName === name)) {
+    // 存在某个名字都是最下名字，需要保留一个单词
+    sameNames.pop()
+    sameName = sameNames.join('')
+  }
+
+  return sameName
 }
 
 export function toUpperFirstLetter(text: string) {

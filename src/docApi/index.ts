@@ -9,7 +9,7 @@ import {
   firstToUpper,
   getIdentifierFromUrl,
   getMaxSamePath,
-  getSamePath,
+  getSameName,
   transformCamelCase
 } from '../common/utils'
 import _ from 'lodash'
@@ -158,9 +158,13 @@ export default class DocApi {
       const names = new Set<string>([])
       const samePath = getMaxSamePath(funs.map(i => i.apiPath.slice(1)))
 
+      const operationIds = funs.map(fun => fun.item.operationId).filter(Boolean) as string[]
+      const sameName = getSameName(operationIds)
+
       const pathItems = funs.map(funInfo => {
         const { item, method, apiPath } = funInfo
         let name = this.createFunName(apiPath, samePath, method, item.operationId)
+        name = name.replace(sameName, '')
         name = checkName(name, checkName => names.has(checkName))
         names.add(name)
 
