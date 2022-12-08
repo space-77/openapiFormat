@@ -9,6 +9,7 @@ const isChinese = require('is-chinese')
 const converter = require('swagger2openapi')
 const deepForEach = require('deep-for-each')
 
+const tagType = 'tag'
 const fixNames = ['Interface', 'module']
 
 type Subject = { originalRef: string; $ref: string; title?: string; tags?: string[] }
@@ -40,7 +41,7 @@ function translateTagNames(options: TagNamesOp) {
       const tagItem = { subjects: [subject], text, textEn: '' }
       tagsList.push(tagItem)
 
-      let textEn = await t.addTranslate(text)
+      let textEn = await t.addTranslate(text, tagType)
       textEn = checkName(textEn, name => tagsList.some(i => i.textEn === name))
 
       const tagInfo = tagList.find(tag => tag.name === text)
@@ -67,7 +68,8 @@ function translateTagNames(options: TagNamesOp) {
   })
 }
 
-function fixTagName(textEn: string) {
+function fixTagName(textEn: string, type?: string) {
+  if (type !== tagType) return textEn.trim()
   const nameList = _.startCase(textEn).split(' ')
   if (nameList.length > 1) {
     textEn = textEn.replace(new RegExp(`(${fixNames.join('|')})$`, 'i'), '')

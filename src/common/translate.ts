@@ -1,12 +1,21 @@
 import _ from 'lodash'
 import { iflyrecTranslator, baiduTranslator, bingTranslator } from 'node-translates'
 
-export type DictList = { zh: string; en: string }
-export type WaitTranslate = { resolve: (value: string) => void; reject: (reason?: any) => void; text: string }
-export type FixText = (enText: string) => string
+export type DictList = { zh: string; en: string; form?: '讯飞' | '百度' | '微软' }
+export type WaitTranslate = {
+  text: string
+  type?: string
+  reject: (reason?: any) => void
+  resolve: (value: string) => void
+}
+export type FixText = (textEn: string, type?: string) => string
 export default class Translate {
   private waitTranslateList: WaitTranslate[] = []
-  private engines = [iflyrecTranslator, baiduTranslator, bingTranslator]
+  private engines = [
+    { t: iflyrecTranslator, name: '讯飞' },
+    { t: baiduTranslator, name: '百度' },
+    { t: bingTranslator, name: '微软' }
+  ]
 
   constructor(public dictList: DictList[] = []) {}
 
@@ -33,9 +42,9 @@ export default class Translate {
       throw new Error(errStr)
     }
     try {
-      const resList = await this.engines[engineIndex](texts.map(i => i.text))
+      const resList = await this.engines[engineIndex].t(texts.map(i => i.text))
       resList.forEach((i, index) => {
-        const textEn = typeof fixText === 'function' ? fixText(i.en) : i.en
+        const textEn = typeof fixText === 'function' ? fixText(i.en, texts[index].type) : i.en
         i.en = Translate.startCaseClassName(textEn)
         this.dictList.push(i)
         texts[index].resolve(i.en)
@@ -50,9 +59,9 @@ export default class Translate {
     return this.dictList.find(i => i.zh === text)
   }
 
-  addTranslate(text: string) {
+  addTranslate(text: string, type?: string) {
     return new Promise<string>((resolve, reject) => {
-      this.waitTranslateList.push({ text, resolve, reject })
+      this.waitTranslateList.push({ text, resolve, reject, type })
     })
   }
 
