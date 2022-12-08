@@ -9,6 +9,8 @@ const isChinese = require('is-chinese')
 const converter = require('swagger2openapi')
 const deepForEach = require('deep-for-each')
 
+const fixNames = ['Interface', 'module']
+
 type Subject = { originalRef: string; $ref: string; title?: string; tags?: string[] }
 type TextList = { subjects: Subject[]; text: string; textEn?: string }
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string }
@@ -65,6 +67,14 @@ function translateTagNames(options: TagNamesOp) {
   })
 }
 
+function fixTagName(textEn: string) {
+  const nameList = _.startCase(textEn).split(' ')
+  if (nameList.length > 1) {
+    textEn = textEn.replace(new RegExp(`(${fixNames.join('|')})$`, 'i'), '')
+  }
+  return textEn.trim()
+}
+
 async function translate(data: any, dictList: DictList[]) {
   const t = new Translate(dictList)
   const textList: TextList[] = []
@@ -119,7 +129,7 @@ async function translate(data: any, dictList: DictList[]) {
     }
   })
 
-  await t.translate()
+  await t.translate(fixTagName)
   await Promise.all(promsList)
 
   if (data.definitions) {
@@ -162,7 +172,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
     }
   })
 
-  await t.translate()
+  await t.translate(fixTagName)
   if (data.components) {
     Object.values(data.components).forEach(moduleValue => {
       Object.entries(moduleValue).forEach(async ([key, value]) => {
