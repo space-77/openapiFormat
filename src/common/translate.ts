@@ -26,7 +26,6 @@ export default class Translate {
 
   private async onTranslate(texts: WaitTranslate[], fixText?: FixText, engineIndex = 0): Promise<DictList[]> {
     if (texts.length === 0) return []
-    console.log(`正在翻译共翻译 ${texts.length} 条数据`)
 
     if (engineIndex >= this.engines.length) {
       const errStr = 'translate error, all translate engine can not access'
@@ -39,7 +38,7 @@ export default class Translate {
         const textEn = typeof fixText === 'function' ? fixText(i.en) : i.en
         i.en = Translate.startCaseClassName(textEn)
         this.dictList.push(i)
-        texts[index].resolve(textEn)
+        texts[index].resolve(i.en)
       })
       return resList
     } catch (error) {
@@ -74,14 +73,21 @@ export default class Translate {
       return !item
     })
 
-    const maxlen = 200
+    const maxlen = 100
 
     if (texts.length > maxlen) {
+      console.log(`共 ${texts.length} 条数据，分 ${Math.ceil(texts.length / maxlen)} 批翻译`)
       const textsList = this.cutArray(texts, maxlen)
-      const proms = textsList.map(async t => await this.onTranslate(t, fixText))
+      const proms = textsList.map(async (t, index) => {
+        console.log(`正在翻译第 ${index + 1} 批数据，共 ${t.length} 条`)
+        await this.onTranslate(t, fixText)
+      })
       await Promise.all(proms)
+      console.log('翻译完成')
     } else {
+      if (texts.length > 0) console.log(`正在翻译共翻译 ${texts.length} 条数据`)
       await this.onTranslate(texts, fixText)
+      if (texts.length > 0) console.log('翻译完成')
     }
 
     this.waitTranslateList = []
