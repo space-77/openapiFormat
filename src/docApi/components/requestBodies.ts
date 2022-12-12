@@ -1,5 +1,6 @@
-import Components, { ModuleName } from '../components'
+import _ from 'lodash'
 import TypeInfoBase from './base'
+import Components, { ModuleName } from '../components'
 import type {
   BodyObject,
   ResponseData,
@@ -64,5 +65,13 @@ export default class RequestBodies extends TypeInfoBase {
       }
       this.typeItems.push(...typeItemList)
     }
+  }
+
+  getRealBody(): TypeInfoBase {
+    const typeInfo = _.cloneDeep(super.getRealBody())
+    typeInfo.typeItems.forEach(i => {
+      i.paramType = 'body'
+    })
+    return typeInfo
   }
 }

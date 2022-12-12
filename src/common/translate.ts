@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { iflyrecTranslator, baiduTranslator, bingTranslator } from 'node-translates'
+import { iflyrecTranslator, baiduTranslator, bingTranslator, Languages } from 'node-translates'
 
 export type DictList = { zh: string; en: string; form?: '讯飞' | '百度' | '微软' }
 export type WaitTranslate = {
@@ -33,26 +33,26 @@ export default class Translate {
     return wordArray.join('').replace(/^\d+\S+/, $1 => `N${$1}`)
   }
 
-  private async onTranslate(texts: WaitTranslate[], fixText?: FixText, engineIndex = 0): Promise<DictList[]> {
-    if (texts.length === 0) return []
-
+  protected async _translate(text: WaitTranslate, fixText?: FixText, engineIndex = 0) {
     if (engineIndex >= this.engines.length) {
       const errStr = 'translate error, all translate engine can not access'
-      texts.forEach(i => i.reject(errStr))
       throw new Error(errStr)
     }
     try {
-      const resList = await this.engines[engineIndex].t(texts.map(i => i.text))
-      resList.forEach((i, index) => {
-        const textEn = typeof fixText === 'function' ? fixText(i.en, texts[index].type) : i.en
-        i.en = Translate.startCaseClassName(textEn)
-        this.dictList.push(i)
-        texts[index].resolve(i.en)
-      })
-      return resList
+      const { dst } = await this.engines[engineIndex].t({ text: text.text, from: Languages.ZH, to: Languages.EN })
+      let textEn = typeof fixText === 'function' ? fixText(dst, text.type) : dst
+      textEn = Translate.startCaseClassName(textEn)
+      this.dictList.push({ en: textEn, zh: text.text })
+      text.resolve(textEn)
     } catch (error) {
-      return this.onTranslate(texts, fixText, engineIndex + 1)
+      console.error('翻译失败，正在换一个平台重试')
+      this._translate(text, fixText, engineIndex + 1)
     }
+  }
+
+  private async onTranslate(texts: WaitTranslate[], fixText?: FixText): Promise<void> {
+    const proms = texts.map(async i => this._translate(i, fixText))
+    await Promise.all(proms)
   }
 
   find(text: string) {
@@ -82,23 +82,25 @@ export default class Translate {
       return !item
     })
 
-    const maxlen = 100
+    // const maxlen = 100
 
-    if (texts.length > maxlen) {
-      console.log(`共 ${texts.length} 条数据，分 ${Math.ceil(texts.length / maxlen)} 批翻译`)
-      const textsList = this.cutArray(texts, maxlen)
-      const proms = textsList.map(async (t, index) => {
-        console.log(`正在翻译第 ${index + 1} 批数据，共 ${t.length} 条`)
-        await this.onTranslate(t, fixText)
-      })
-      await Promise.all(proms)
-      console.log('翻译完成')
-    } else {
-      if (texts.length > 0) console.log(`正在翻译共翻译 ${texts.length} 条数据`)
+    // if (texts.length > maxlen) {
+    //   console.log(`共 ${texts.length} 条数据，分 ${Math.ceil(texts.length / maxlen)} 批翻译`)
+    //   const textsList = this.cutArray(texts, maxlen)
+    //   const proms = textsList.map(async (t, index) => {
+    //     console.log(`正在翻译第 ${index + 1} 批数据，共 ${t.length} 条`)
+    //     await this.onTranslate(t, fixText)
+    //   })
+    //   await Promise.all(proms)
+    //   console.log('翻译完成')
+    // } else {
+    // }
+
+    if (texts.length > 0) {
+      console.log(`正在翻译共翻译 ${texts.length} 条数据`)
       await this.onTranslate(texts, fixText)
-      if (texts.length > 0) console.log('翻译完成')
+      console.log('翻译完成')
     }
-
     this.waitTranslateList = []
   }
 }

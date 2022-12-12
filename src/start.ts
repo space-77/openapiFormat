@@ -13,7 +13,7 @@ const tagType = 'tag'
 const fixNames = ['Interface', 'module']
 
 type Subject = { originalRef: string; $ref: string; title?: string; tags?: string[] }
-type TextList = { subjects: Subject[]; text: string; textEn?: string }
+type TextList = { subjects: Subject[]; text: string; translateProm: Promise<string>; textEn?: string }
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string }
 
 const tagsList: TagsList[] = []
@@ -83,26 +83,28 @@ async function translate(data: any, dictList: DictList[]) {
   const promsList: Promise<any>[] = []
 
   async function addTranslate(text: string, subject: Subject) {
+    let textEn = ''
     const item = textList.find(i => i.text === text)
     if (!item) {
-      const newItem: TextList = { subjects: [subject], text: text }
+      const textTranslateProm = t.addTranslate(text)
+      const newItem: TextList = { subjects: [subject], text: text, translateProm: textTranslateProm }
       textList.push(newItem)
-      try {
-        const textTranslateProm = t.addTranslate(text)
-        let textEn = (await textTranslateProm) as string
+      textEn = await textTranslateProm
 
-        // 查重,是否已存在相同的译文：如 你 翻译成 you, 但是 您 也可以翻译成 you
-        textEn = checkName(textEn, checkName => textList.some(i => i.text === checkName))
+      // 查重,是否已存在相同的译文：如 你 翻译成 you, 但是 您 也可以翻译成 you
+      textEn = checkName(textEn, checkName => textList.some(i => i.text === checkName))
 
-        newItem.textEn = textEn
-        newItem.subjects.forEach(i => {
-          i.$ref = i.$ref.replace(text, textEn)
-          i.originalRef = i.originalRef.replace(text, textEn)
-        })
-      } catch (error) {}
+      newItem.textEn = textEn
+      newItem.subjects.forEach(i => {
+        i.$ref = i.$ref.replace(text, textEn)
+        i.originalRef = i.originalRef.replace(text, textEn)
+      })
     } else {
       item.subjects.push(subject)
+      textEn = await item.translateProm
     }
+
+    return textEn
   }
 
   function formatStr(value: string) {
@@ -117,9 +119,20 @@ async function translate(data: any, dictList: DictList[]) {
       // 切割
       subject.title = value
       const texts = formatStr(value)
-      texts.map(async text => {
-        await addTranslate(text, subject)
+
+      let newRef: string = value
+      const proms = texts.map(async text => {
+        const textEn = await addTranslate(text, subject)
+        newRef = newRef.replace(text, textEn)
       })
+
+      await Promise.all(proms)
+
+      // 修改包含中文 data.definitions 的 key
+      if (data.definitions[value] && data.definitions[newRef] === undefined && value !== newRef) {
+        data.definitions[newRef] = data.definitions[value]
+        delete data.definitions[value]
+      }
     } else if (key === 'tags' && subject !== data && Array.isArray(value) && value.length > 0) {
       translateTagNames({ t, tags: value, subject: subject as any, data })
     }
@@ -135,6 +148,7 @@ async function translate(data: any, dictList: DictList[]) {
   await Promise.all(promsList)
 
   if (data.definitions) {
+    // 这里是处理没有被引用但key包含了中文的 definitions 的翻译，不处理应该也没事
     Object.entries(data.definitions).forEach(async ([key, value]) => {
       let newKey = key
       const proms = formatStr(key).map(async text => {
@@ -144,6 +158,7 @@ async function translate(data: any, dictList: DictList[]) {
       await Promise.all(proms)
 
       if (newKey === key) return
+      newKey = checkName(newKey, n => data.definitions[n] !== undefined)
       data.definitions[newKey] = value
       delete data.definitions[key]
     })
@@ -155,16 +170,33 @@ async function translate(data: any, dictList: DictList[]) {
 
 async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
   const t = new Translate(dictList)
-  const textEnList = new Set<string>([])
+  const textList: TextList[] = []
 
   deepForEach(data, async (value: any, key: string, subject: any) => {
     if (key === '$ref' && typeof value === 'string' && value.startsWith('#/components/')) {
       const [, , typeInfoKey, refNname] = value.split('/')
+      let textEn = ''
       if (refNname.split('').some(isChinese)) {
-        let textEn = await t.addTranslate(refNname)
-        textEn = checkName(textEn, checkName => textEnList.has(checkName))
-        textEnList.add(textEn)
-        subject.$ref = subject.$ref.replace(refNname, textEn)
+        const item = textList.find(i => (i.text = refNname))
+        if (!item) {
+          const translateProm = t.addTranslate(refNname)
+          const newItem: TextList = { text: refNname, subjects: [subject], translateProm: translateProm }
+          textList.push(newItem)
+          textEn = await translateProm
+          newItem.textEn = checkName(textEn, n => !!textList.find(i => (i.textEn = n)))
+          newItem.subjects.forEach(i => {
+            i.$ref = i.$ref.replace(refNname, textEn)
+          })
+        } else {
+          item.subjects.push(subject)
+          textEn = await item.translateProm
+        }
+      }
+      const _data = data as any
+      const newRef = value.replace(refNname, textEn)
+      if (newRef !== value && _data[typeInfoKey][value] && _data[typeInfoKey][newRef] === undefined) {
+        _data[typeInfoKey][newRef] = _data[typeInfoKey][value]
+        delete _data[typeInfoKey][value]
       }
     } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
       translateTagNames({ t, tags: value, subject: subject as any, data })
@@ -176,10 +208,12 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
 
   await t.translate(fixTagName)
   if (data.components) {
+    // 这里是处理没有被引用但key包含了中文的 components 的翻译，不处理应该也没事
     Object.values(data.components).forEach(moduleValue => {
       Object.entries(moduleValue).forEach(async ([key, value]) => {
         if (key.split('').some(isChinese)) {
-          const textEn = await t.addTranslate(key)
+          let textEn = await t.addTranslate(key)
+          textEn = checkName(textEn, n => moduleValue[n] !== undefined)
           if (!moduleValue[textEn]) {
             moduleValue[textEn] = value
             delete moduleValue[key]
@@ -304,7 +338,7 @@ async function getApiData(url: string | object, dictList: DictList[]) {
         const { dictList: newDictList } = await translate(data, dictList)
         converter.convertObj(data, { components: true }, function (err: any, options: any) {
           if (err) {
-            reject('swagger2.0 to openapi3.0 error')
+            reject(err?.message ?? 'swagger2.0 to openapi3.0 error')
             return
           }
           const json = options.openapi as OpenAPIV3.Document
