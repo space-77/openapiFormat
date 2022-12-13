@@ -104,7 +104,9 @@ export default class DocApi {
               tagInfo.name = description
             }
 
-            const moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name))
+            let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name), 3)
+            moduleName = checkName(moduleName, n => !!moduleList.find(i => i.moduleName === n))
+
 
             moduleList.push({ moduleName, tag, funs: [funItem], tagInfo })
           } else {
