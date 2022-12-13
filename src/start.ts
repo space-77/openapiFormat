@@ -24,47 +24,49 @@ function translateTagNames(options: TagNamesOp) {
   if (!Array.isArray(data.tags)) data.tags = []
   const { tags: rootTag } = data
 
+  async function onTranslate(tagText: string, index: number) {
+    let tagTextEn = tagText
+    const tItem = tagsTranslateList.find(i => i.text === tagText)
+    if (!tItem) {
+      const translateProm = t.addTranslate(tagText)
+      const newTItem: TagsList = { translateProm, text: tagText, subjects: [subject] }
+
+      tagsTranslateList.push(newTItem)
+      tagTextEn = await translateProm
+      tagTextEn = Translate.startCaseClassName(tagTextEn, 3)
+
+      tagTextEn = checkName(tagTextEn, n => !!rootTag.find(i => i.name === n))
+      newTItem.textEn = tagTextEn
+
+      newTItem.subjects.forEach(obj => {
+        obj.tags[index] = tagTextEn
+      })
+    } else {
+      tItem.subjects.push(subject)
+      await tItem.translateProm
+      tagTextEn = tItem.textEn as string
+    }
+    return tagTextEn
+  }
+
   itemTags.forEach(async (tagText, index) => {
     const rootTagInfo = rootTag.find(i => i.name === tagText)
     if (rootTagInfo) {
-      if (!tagText.split('').some(isChinese)) {
-        return // 正常数据，返回
-      } else {
-        // 需要翻译
-        if (rootTagInfo.description?.split('').some(isChinese) || !rootTagInfo.description) {
-          // if
-        } else {
-          // 使用 description
-          return
-        }
+      if (!tagText.split('').some(isChinese)) return // 正常数据，返回
+      // 需要翻译
+      if (rootTagInfo.description?.split('').some(isChinese) || !rootTagInfo.description) {
+        // const tagTextEn = await onTranslate(tagText, index)
+        rootTagInfo.name = await onTranslate(tagText, index)
+        if (!rootTagInfo.description) rootTagInfo.description = tagText
       }
     } else {
       // 根目录没有对应的 tag 需要添加
-      let tagTextEn = tagText
+      let name = tagText
       if (tagText.split('').some(isChinese)) {
         // 需要翻译
-        const tItem = tagsTranslateList.find(i => i.text === tagText)
-        if (!tItem) {
-          const translateProm = t.addTranslate(tagText)
-          const newTItem: TagsList = { translateProm, text: tagText, subjects: [subject] }
-
-          tagsTranslateList.push(newTItem)
-          tagTextEn = await translateProm
-
-          tagTextEn = checkName(tagTextEn, n => !!rootTag.find(i => i.name === n))
-          newTItem.textEn = tagTextEn
-
-          newTItem.subjects.forEach(obj => {
-            obj.tags[index] = tagTextEn
-          })
-
-        } else {
-          tItem.subjects.push(subject)
-          await tItem.translateProm
-          tagTextEn = tItem.textEn as string
-        }
+        name = await onTranslate(tagText, index)
       }
-      rootTag.push({ name: tagTextEn, description: tagText })
+      rootTag.push({ name, description: name })
     }
 
     //

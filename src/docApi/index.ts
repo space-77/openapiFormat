@@ -104,7 +104,7 @@ export default class DocApi {
               tagInfo.name = description
             }
 
-            let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name), 3)
+            let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name))
             moduleName = checkName(moduleName, n => !!moduleList.find(i => i.moduleName === n))
 
 
