@@ -14,15 +14,17 @@ const fixNames = ['Interface', 'module']
 
 type Subject = { originalRef: string; $ref: string; title?: string; tags?: string[] }
 type TextList = { subjects: Subject[]; text: string; translateProm: Promise<string>; textEn?: string }
-type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string }
+type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string; translateProm: Promise<string> }
 
-const tagsList: TagsList[] = []
+const tagsTranslateList: TagsList[] = []
 type TagNamesOp = { itemTags: string[]; subject: { tags: string[] }; t: Translate; data: OpenAPIV3.Document }
 function translateTagNames(options: TagNamesOp) {
   const { itemTags, subject, t, data } = options
-  const { tags: rootTag = [] } = data
 
-  itemTags.forEach(tagText => {
+  if (!Array.isArray(data.tags)) data.tags = []
+  const { tags: rootTag } = data
+
+  itemTags.forEach(async (tagText, index) => {
     const rootTagInfo = rootTag.find(i => i.name === tagText)
     if (rootTagInfo) {
       if (!tagText.split('').some(isChinese)) {
@@ -31,68 +33,94 @@ function translateTagNames(options: TagNamesOp) {
         // 需要翻译
         if (rootTagInfo.description?.split('').some(isChinese) || !rootTagInfo.description) {
           // if
-          
         } else {
-          // 使用 description 
+          // 使用 description
           return
         }
       }
+    } else {
+      // 根目录没有对应的 tag 需要添加
+      let tagTextEn = tagText
+      if (tagText.split('').some(isChinese)) {
+        // 需要翻译
+        const tItem = tagsTranslateList.find(i => i.text === tagText)
+        if (!tItem) {
+          const translateProm = t.addTranslate(tagText)
+          const newTItem: TagsList = { translateProm, text: tagText, subjects: [subject] }
+
+          tagsTranslateList.push(newTItem)
+          tagTextEn = await translateProm
+
+          tagTextEn = checkName(tagTextEn, n => !!rootTag.find(i => i.name === n))
+          newTItem.textEn = tagTextEn
+
+          newTItem.subjects.forEach(obj => {
+            obj.tags[index] = tagTextEn
+          })
+
+        } else {
+          tItem.subjects.push(subject)
+          await tItem.translateProm
+          tagTextEn = tItem.textEn as string
+        }
+      }
+      rootTag.push({ name: tagTextEn, description: tagText })
     }
 
     //
   })
 
-  itemTags.map(async text => {
-    const tag = tagsList.find(i => i.text === text)
-    if (!text.split('').some(isChinese)) {
-      // 英文
-      const tagInfo = data.tags?.find(i => i.name === text)
+  // itemTags.map(async text => {
+  //   const tag = tagsTranslateList.find(i => i.text === text)
+  //   if (!text.split('').some(isChinese)) {
+  //     // 英文
+  //     const tagInfo = data.tags?.find(i => i.name === text)
 
-      // 如果 openapi.tags 没找到对应的tag,则需要添加
-      if (!tagInfo) {
-        if (!Array.isArray(data.tags)) data.tags = []
-        data.tags.push({ name: text, description: text })
-      }
+  //     // 如果 openapi.tags 没找到对应的tag,则需要添加
+  //     if (!tagInfo) {
+  //       if (!Array.isArray(data.tags)) data.tags = []
+  //       data.tags.push({ name: text, description: text })
+  //     }
 
-      // 模块名为英文，不需要翻译
-      return
-    }
-    if (!tag) {
-      const tagItem = { subjects: [subject], text, textEn: '' }
-      tagsList.push(tagItem)
+  //     // 模块名为英文，不需要翻译
+  //     return
+  //   }
+  //   if (!tag) {
+  //     const tagItem = { subjects: [subject], text, textEn: '' }
+  //     tagsTranslateList.push(tagItem)
 
-      let textEn = await t.addTranslate(text, tagType)
-      textEn = checkName(textEn, name => tagsList.some(i => i.textEn === name))
+  //     let textEn = await t.addTranslate(text, tagType)
+  //     textEn = checkName(textEn, name => tagsTranslateList.some(i => i.textEn === name))
 
-      const tagInfo = rootTag.find(tag => tag.name === text || tag.description === text)
-      if (!tagInfo) {
-        if (!Array.isArray(data.tags)) data.tags = []
-        // 可能存在英文名字，需要检查一下
-        textEn = checkName(textEn, n => !!data.tags!.find(i => i.name === n))
-        const tag = { name: textEn, description: text }
-        data.tags.push(tag)
-      } else {
-        // if ((tagInfo.description = text)) {
-        //   // name 和 description 互换了
-        //   // const { description } = tagInfo
-        //   // let name = checkName(tagInfo.description, n => )
-        //   // tagInfo
-        // } else {
-        // }
-        tagInfo.name = textEn
-        tagInfo.description = text
-      }
+  //     const tagInfo = rootTag.find(tag => tag.name === text || tag.description === text)
+  //     if (!tagInfo) {
+  //       if (!Array.isArray(data.tags)) data.tags = []
+  //       // 可能存在英文名字，需要检查一下
+  //       textEn = checkName(textEn, n => !!data.tags!.find(i => i.name === n))
+  //       const tag = { name: textEn, description: text }
+  //       data.tags.push(tag)
+  //     } else {
+  //       // if ((tagInfo.description = text)) {
+  //       //   // name 和 description 互换了
+  //       //   // const { description } = tagInfo
+  //       //   // let name = checkName(tagInfo.description, n => )
+  //       //   // tagInfo
+  //       // } else {
+  //       // }
+  //       tagInfo.name = textEn
+  //       tagInfo.description = text
+  //     }
 
-      tagItem.subjects.forEach(subject => {
-        const index = subject.tags.findIndex(i => i === text)
-        if (index > -1) subject.tags[index] = textEn // 替换原有的 tag 名称
-      })
+  //     tagItem.subjects.forEach(subject => {
+  //       const index = subject.tags.findIndex(i => i === text)
+  //       if (index > -1) subject.tags[index] = textEn // 替换原有的 tag 名称
+  //     })
 
-      tagItem.textEn = textEn
-    } else {
-      tag.subjects.push(subject as any)
-    }
-  })
+  //     tagItem.textEn = textEn
+  //   } else {
+  //     tag.subjects.push(subject as any)
+  //   }
+  // })
 }
 
 function fixTagName(textEn: string, type?: string) {
