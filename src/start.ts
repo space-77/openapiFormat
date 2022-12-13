@@ -17,12 +17,32 @@ type TextList = { subjects: Subject[]; text: string; translateProm: Promise<stri
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string }
 
 const tagsList: TagsList[] = []
-type TagNamesOp = { tags: string[]; subject: { tags: string[] }; t: Translate; data: OpenAPIV3.Document }
+type TagNamesOp = { itemTags: string[]; subject: { tags: string[] }; t: Translate; data: OpenAPIV3.Document }
 function translateTagNames(options: TagNamesOp) {
-  const { tags, subject, t, data } = options
-  const { tags: tagList = [] } = data
+  const { itemTags, subject, t, data } = options
+  const { tags: rootTag = [] } = data
 
-  tags.map(async text => {
+  itemTags.forEach(tagText => {
+    const rootTagInfo = rootTag.find(i => i.name === tagText)
+    if (rootTagInfo) {
+      if (!tagText.split('').some(isChinese)) {
+        return // 正常数据，返回
+      } else {
+        // 需要翻译
+        if (rootTagInfo.description?.split('').some(isChinese) || !rootTagInfo.description) {
+          // if
+          
+        } else {
+          // 使用 description 
+          return
+        }
+      }
+    }
+
+    //
+  })
+
+  itemTags.map(async text => {
     const tag = tagsList.find(i => i.text === text)
     if (!text.split('').some(isChinese)) {
       // 英文
@@ -44,7 +64,7 @@ function translateTagNames(options: TagNamesOp) {
       let textEn = await t.addTranslate(text, tagType)
       textEn = checkName(textEn, name => tagsList.some(i => i.textEn === name))
 
-      const tagInfo = tagList.find(tag => tag.name === text)
+      const tagInfo = rootTag.find(tag => tag.name === text || tag.description === text)
       if (!tagInfo) {
         if (!Array.isArray(data.tags)) data.tags = []
         // 可能存在英文名字，需要检查一下
@@ -52,6 +72,13 @@ function translateTagNames(options: TagNamesOp) {
         const tag = { name: textEn, description: text }
         data.tags.push(tag)
       } else {
+        // if ((tagInfo.description = text)) {
+        //   // name 和 description 互换了
+        //   // const { description } = tagInfo
+        //   // let name = checkName(tagInfo.description, n => )
+        //   // tagInfo
+        // } else {
+        // }
         tagInfo.name = textEn
         tagInfo.description = text
       }
@@ -134,7 +161,7 @@ async function translate(data: any, dictList: DictList[]) {
         delete data.definitions[value]
       }
     } else if (key === 'tags' && subject !== data && Array.isArray(value) && value.length > 0) {
-      translateTagNames({ t, tags: value, subject: subject as any, data })
+      translateTagNames({ t, itemTags: value, subject: subject as any, data })
     }
   }
 
@@ -200,7 +227,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
         delete _data[typeInfoKey][value]
       }
     } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
-      translateTagNames({ t, tags: value, subject: subject as any, data })
+      translateTagNames({ t, itemTags: value, subject: subject as any, data })
     } else if (key === 'operationId') {
       // 处理 方法名带下横杠
       subject.operationId = Translate.startCaseClassName(value)
