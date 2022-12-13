@@ -149,7 +149,7 @@ async function translate(data: any, dictList: DictList[]) {
 
   if (data.definitions) {
     // 这里是处理没有被引用但key包含了中文的 definitions 的翻译，不处理应该也没事
-    Object.entries(data.definitions).forEach(async ([key, value]) => {
+    const proms = Object.entries(data.definitions).map(async ([key, value]) => {
       let newKey = key
       const proms = formatStr(key).map(async text => {
         const textEn = await t.addTranslate(text)
@@ -163,6 +163,7 @@ async function translate(data: any, dictList: DictList[]) {
       delete data.definitions[key]
     })
     await t.translate()
+    await Promise.all(proms)
   }
 
   return { data, dictList: t.dictList }
