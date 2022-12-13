@@ -13,8 +13,8 @@ export default class Translate {
   private waitTranslateList: WaitTranslate[] = []
   private engines = [
     { t: iflyrecTranslator, name: '讯飞' },
-    { t: baiduTranslator, name: '百度' },
-    { t: bingTranslator, name: '微软' }
+    { t: bingTranslator, name: '微软' },
+    { t: baiduTranslator, name: '百度' } // 百度保底
   ]
 
   constructor(public dictList: DictList[] = []) {}
@@ -81,26 +81,12 @@ export default class Translate {
       if (item) i.resolve(item.en)
       return !item
     })
-
-    // const maxlen = 100
-
-    // if (texts.length > maxlen) {
-    //   console.log(`共 ${texts.length} 条数据，分 ${Math.ceil(texts.length / maxlen)} 批翻译`)
-    //   const textsList = this.cutArray(texts, maxlen)
-    //   const proms = textsList.map(async (t, index) => {
-    //     console.log(`正在翻译第 ${index + 1} 批数据，共 ${t.length} 条`)
-    //     await this.onTranslate(t, fixText)
-    //   })
-    //   await Promise.all(proms)
-    //   console.log('翻译完成')
-    // } else {
-    // }
+    this.waitTranslateList = []
 
     if (texts.length > 0) {
       console.log(`正在翻译共翻译 ${texts.length} 条数据`)
       await this.onTranslate(texts, fixText)
       console.log('翻译完成')
     }
-    this.waitTranslateList = []
   }
 }

@@ -68,10 +68,8 @@ export default class RequestBodies extends TypeInfoBase {
   }
 
   getRealBody(): TypeInfoBase {
-    const typeInfo = _.cloneDeep(super.getRealBody())
-    typeInfo.typeItems.forEach(i => {
-      i.paramType = 'body'
-    })
+    const typeInfo = _.clone(super.getRealBody())
+    typeInfo.moduleName = 'requestBodies'
     return typeInfo
   }
 }

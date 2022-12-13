@@ -83,7 +83,7 @@ export default abstract class TypeInfoBase {
     }
   }
 
-  getTypeItems = (): TypeItem[] => {
+  getTypeItems(): TypeItem[] {
     const allTypesList: TypeItem[] = [...this.typeItems]
     const allRef = _.uniq(_.flattenDeep(this.getAllRefs()))
     allRef.forEach(i => {
@@ -93,7 +93,7 @@ export default abstract class TypeInfoBase {
 
     return _.uniq(allTypesList).map(i => {
       if (this.moduleName === 'requestBodies') {
-        const ii = _.cloneDeep(i)
+        const ii = _.clone(i)
         ii.paramType = 'body'
         return ii
       } else {
