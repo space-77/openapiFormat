@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { iflyrecTranslator, baiduTranslator, bingTranslator, Languages } from 'node-translates'
 
-export type DictList = { zh: string; en: string; form?: '讯飞' | '百度' | '微软' }
+export type DictList = { zh: string; en: string | null; form?: '讯飞' | '百度' | '微软' }
 export type WaitTranslate = {
   text: string
   type?: string
@@ -9,6 +9,10 @@ export type WaitTranslate = {
   resolve: (value: string) => void
 }
 export type FixText = (textEn: string, type?: string) => string
+
+export enum TranslateCode {
+  TRANSLATE_ERR
+}
 export default class Translate {
   private waitTranslateList: WaitTranslate[] = []
   private engines = [
@@ -35,6 +39,7 @@ export default class Translate {
 
   protected async _translate(text: WaitTranslate, fixText?: FixText, engineIndex = 0) {
     if (engineIndex >= this.engines.length) {
+      this.dictList.push({ en: null, zh: text.text })
       const errStr = 'translate error, all translate engine can not access'
       throw new Error(errStr)
     }
@@ -45,14 +50,18 @@ export default class Translate {
       this.dictList.push({ en: textEn, zh: text.text })
       text.resolve(textEn)
     } catch (error) {
-      console.error('翻译失败，正在换一个平台重试')
+      // console.error('翻译失败，正在换一个平台重试')
       this._translate(text, fixText, engineIndex + 1)
     }
   }
 
   private async onTranslate(texts: WaitTranslate[], fixText?: FixText): Promise<void> {
-    const proms = texts.map(async i => this._translate(i, fixText))
-    await Promise.all(proms)
+    try {
+      const proms = texts.map(async i => this._translate(i, fixText))
+      await Promise.all(proms)
+    } catch (error) {
+      return Promise.reject({ code: TranslateCode.TRANSLATE_ERR, error, dictList: this.dictList })
+    }
   }
 
   find(text: string) {
@@ -78,15 +87,15 @@ export default class Translate {
     // 过滤出没有缓存的中文数据
     const texts = this.waitTranslateList.filter(i => {
       const item = this.dictList.find(j => j.zh === i.text)
-      if (item) i.resolve(item.en)
-      return !item
+      if (item && item.en) i.resolve(item.en)
+      return !item?.en ?? true
     })
     this.waitTranslateList = []
 
     if (texts.length > 0) {
       console.log(`正在翻译共翻译 ${texts.length} 条数据`)
-      await this.onTranslate(texts, fixText)
-      console.log('翻译完成')
+      return await this.onTranslate(texts, fixText)
+      // console.log('翻译完成')
     }
   }
 }
