@@ -3,7 +3,7 @@ import axios from 'axios'
 import DocApi from './docApi'
 import { checkName } from './common/utils'
 import type { OpenAPIV3 } from 'openapi-types'
-import Translate, { DictList } from './common/translate'
+import Translate, { DictList, TranslateType } from './common/translate'
 
 const isChinese = require('is-chinese')
 const converter = require('swagger2openapi')
@@ -134,8 +134,8 @@ function fixTagName(textEn: string, type?: string) {
   return textEn.trim()
 }
 
-async function translate(data: any, dictList: DictList[]) {
-  const t = new Translate(dictList)
+async function translate(data: any, dictList: DictList[], translateType?: TranslateType) {
+  const t = new Translate(dictList, translateType)
   const textList: TextList[] = []
   const promsList: Promise<any>[] = []
 
@@ -226,8 +226,8 @@ async function translate(data: any, dictList: DictList[]) {
   return { data, dictList: t.dictList }
 }
 
-async function translateV3(data: OpenAPIV3.Document, dictList: DictList[]) {
-  const t = new Translate(dictList)
+async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType?:TranslateType) {
+  const t = new Translate(dictList, translateType)
   const textList: TextList[] = []
 
   deepForEach(data, async (value: any, key: string, subject: any) => {
@@ -381,7 +381,7 @@ function fixConvertErr(json: any) {
 }
 
 type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
-async function getApiData(url: string | object, dictList: DictList[]) {
+async function getApiData(url: string | object, dictList: DictList[], translateType?: TranslateType) {
   return new Promise<ApiData>(async (resolve, reject) => {
     try {
       let data: any = null
@@ -393,7 +393,7 @@ async function getApiData(url: string | object, dictList: DictList[]) {
       }
       if (data.swagger === '2.0') {
         fixConvertErr(data)
-        const { dictList: newDictList } = await translate(data, dictList)
+        const { dictList: newDictList } = await translate(data, dictList, translateType)
         converter.convertObj(data, { components: true }, function (err: any, options: any) {
           if (err) {
             reject(err?.message ?? 'swagger2.0 to openapi3.0 error')
@@ -404,7 +404,7 @@ async function getApiData(url: string | object, dictList: DictList[]) {
           resolve({ json, dictList: newDictList })
         })
       } else {
-        const { dictList: newDictList } = await translateV3(data, dictList)
+        const { dictList: newDictList } = await translateV3(data, dictList, translateType)
         resolve({ json: data, dictList: newDictList })
       }
     } catch (error) {
@@ -413,9 +413,11 @@ async function getApiData(url: string | object, dictList: DictList[]) {
   })
 }
 
-export default async function (url: string | object, dictList: DictList[] = []) {
+type Options = { translateType?: TranslateType }
+export default async function (url: string | object, dictList: DictList[] = [], options?: Options) {
+  const { translateType } = options ?? {}
   try {
-    const res = await getApiData(url, dictList)
+    const res = await getApiData(url, dictList, translateType)
 
     const docApi = new DocApi(res.json)
     await docApi.init()

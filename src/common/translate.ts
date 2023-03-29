@@ -1,5 +1,7 @@
 import _ from 'lodash'
 import { iflyrecTranslator, baiduTranslator, bingTranslator, Languages } from 'node-translates'
+import { pinyin } from 'pinyin-pro'
+const isChinese = require('is-chinese')
 
 export type DictList = { zh: string; en: string | null; form?: '讯飞' | '百度' | '微软' }
 export type WaitTranslate = {
@@ -9,6 +11,11 @@ export type WaitTranslate = {
   resolve: (value: string) => void
 }
 export type FixText = (textEn: string, type?: string) => string
+export enum TranslateType {
+  none,
+  pinyin,
+  english
+}
 
 export enum TranslateCode {
   TRANSLATE_ERR
@@ -21,7 +28,8 @@ export default class Translate {
     { t: baiduTranslator, name: '百度' } // 百度保底
   ]
 
-  constructor(public dictList: DictList[] = []) {}
+  constructor(public dictList: DictList[] = [], public type = TranslateType.english) {}
+  // constructor(public dictList: DictList[] = [], public type?: TranslateType) {}
 
   // private dictHasKey(key: string) {
   //   return this.dictList.some(i => i.zh === key)
@@ -37,21 +45,54 @@ export default class Translate {
     return wordArray.join('').replace(/^\d+\S+/, $1 => `N${$1}`)
   }
 
+  protected translateFail(text: WaitTranslate) {
+    this.dictList.push({ en: null, zh: text.text })
+    const errStr = 'translate error, all translate engine can not access'
+    text.reject(errStr)
+    throw new Error(errStr)
+  }
+
   protected async _translate(text: WaitTranslate, fixText?: FixText, engineIndex = 0) {
-    if (engineIndex >= this.engines.length) {
-      this.dictList.push({ en: null, zh: text.text })
-      const errStr = 'translate error, all translate engine can not access'
-      throw new Error(errStr)
-    }
-    try {
-      const { dst } = await this.engines[engineIndex].t({ text: text.text, from: Languages.ZH, to: Languages.EN })
-      let textEn = typeof fixText === 'function' ? fixText(dst, text.type) : dst
-      textEn = Translate.startCaseClassName(textEn)
+    if (this.type === TranslateType.none) {
+      // 不翻译
+      const textEn = Translate.startCaseClassName(text.text)
       this.dictList.push({ en: textEn, zh: text.text })
+      console.log(textEn)
       text.resolve(textEn)
-    } catch (error) {
-      // console.error('翻译失败，正在换一个平台重试')
-      this._translate(text, fixText, engineIndex + 1)
+    } else if (this.type === TranslateType.pinyin) {
+      // 转拼音
+      try {
+        const texts = text.text.split('')
+        let newTexts: string[] = []
+        for (let i = 0; i < texts.length; i++) {
+          const t = texts[i]
+          if (isChinese(t)) {
+            newTexts.push(`--${pinyin(t, { toneType: 'none' })}`)
+          } else {
+            newTexts.push(t)
+          }
+        }
+        const textEn = Translate.startCaseClassName(newTexts.join(''))
+        this.dictList.push({ en: textEn, zh: text.text })
+        text.resolve(textEn)
+      } catch (error) {
+        return this.translateFail(text)
+      }
+    } else {
+      // 翻译
+      if (engineIndex >= this.engines.length) {
+        return this.translateFail(text)
+      }
+      try {
+        const { dst } = await this.engines[engineIndex].t({ text: text.text, from: Languages.ZH, to: Languages.EN })
+        let textEn = typeof fixText === 'function' ? fixText(dst, text.type) : dst
+        textEn = Translate.startCaseClassName(textEn)
+        this.dictList.push({ en: textEn, zh: text.text })
+        text.resolve(textEn)
+      } catch (error) {
+        // console.error('翻译失败，正在换一个平台重试')
+        this._translate(text, fixText, engineIndex + 1)
+      }
     }
   }
 

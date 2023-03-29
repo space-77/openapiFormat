@@ -1,4 +1,5 @@
 import path from 'path'
+import { TranslateType } from './common/translate'
 import docInit from './index'
 // // import api from '../output'
 // import axios from 'axios'
@@ -25,7 +26,8 @@ import docInit from './index'
 // // console.log(text.toString().replace(/(#)/g, ''))
 
 // // https://generator3.swagger.io/index.html
-const url = 'http://tlfete.cfldcn.com:9100/v2/api-docs'
+const url = 'http://tlfete.cfldcn.com:8088/v2/api-docs'
+// const url = 'http://tlfete.cfldcn.com:9100/v2/api-docs'
 // const url = 'http://114.115.202.183:8088/v2/api-docs'
 // const url = 'https://petstore.swagger.io/v2/swagger.json'
 // const url = 'https://generator3.swagger.io/openapi.json'
@@ -39,7 +41,8 @@ const dictPath = path.join(__dirname, '../mock/dict.json')
     const { dict }: any = require(dictPath) ?? { dict: [] }
     // const dictList: any[] = []
     // console.log(dictList)
-    const res = await docInit(url, dict)
+    const res = await docInit(url, dict, { translateType: TranslateType.pinyin })
+    console.log(res.dictList)
     // console.log('----------')
     // console.log('----------')
     // console.log('----------')
