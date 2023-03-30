@@ -26,14 +26,15 @@ import docInit from './index'
 // // console.log(text.toString().replace(/(#)/g, ''))
 
 // // https://generator3.swagger.io/index.html
-const url = 'http://tlfete.cfldcn.com:8088/v2/api-docs'
+// const url = 'http://tlfete.cfldcn.com:8088/v2/api-docs'
+const url = 'http://124.70.8.166/manage/v2/api-docs'
 // const url = 'http://tlfete.cfldcn.com:9100/v2/api-docs'
 // const url = 'http://114.115.202.183:8088/v2/api-docs'
 // const url = 'https://petstore.swagger.io/v2/swagger.json'
 // const url = 'https://generator3.swagger.io/openapi.json'
 // const url = 'https://mock.mengxuegu.com/mock/6384cdec9433403d6c06894e/openapi3/mock'
 
-const json = require(path.join(__dirname, '../mock/api-docs.json'))
+const json = require(path.join(__dirname, '../mock/err.json'))
 // // const openapi = new OpenApi(url)
 const dictPath = path.join(__dirname, '../mock/dict.json')
 ~(async () => {
@@ -41,7 +42,7 @@ const dictPath = path.join(__dirname, '../mock/dict.json')
     const { dict }: any = require(dictPath) ?? { dict: [] }
     // const dictList: any[] = []
     // console.log(dictList)
-    const res = await docInit(url, dict, { translateType: TranslateType.pinyin })
+    const res = await docInit(json, dict)
     console.log(res.dictList)
     // console.log('----------')
     // console.log('----------')

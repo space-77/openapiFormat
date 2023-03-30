@@ -12,7 +12,7 @@ const deepForEach = require('deep-for-each')
 const tagType = 'tag'
 const fixNames = ['Interface', 'module']
 
-type Subject = { originalRef: string; $ref: string; title?: string; tags?: string[] }
+type Subject = { $ref: string; title?: string; tags?: string[] }
 type TextList = { subjects: Subject[]; text: string; translateProm: Promise<string>; textEn?: string }
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string; translateProm: Promise<string> }
 
@@ -154,7 +154,7 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
       newItem.textEn = textEn
       newItem.subjects.forEach(i => {
         i.$ref = i.$ref.replace(text, textEn)
-        i.originalRef = i.originalRef.replace(text, textEn)
+        // i.originalRef = i.originalRef.replace(text, textEn)
       })
     } else {
       item.subjects.push(subject)
@@ -166,13 +166,14 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
 
   function formatStr(value: string) {
     return value
+      .replace(/^#\/definitions\//g, '')
       .replace(/»/g, '')
       .split('«')
       .filter(text => text.split('').some(isChinese))
   }
 
   async function forEachProm(value: any, key: string, subject: Subject) {
-    if (key === 'originalRef') {
+    if (key === '$ref') {
       // 切割
       subject.title = value
       const texts = formatStr(value)
@@ -196,7 +197,7 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
   }
 
   deepForEach(data, (value: any, key: string, subject: any) => {
-    if (key === 'originalRef' || key === 'tags') {
+    if (key === '$ref' || key === 'tags') {
       promsList.push(forEachProm(value, key, subject))
     }
   })
@@ -226,7 +227,7 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
   return { data, dictList: t.dictList }
 }
 
-async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType?:TranslateType) {
+async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType?: TranslateType) {
   const t = new Translate(dictList, translateType)
   const textList: TextList[] = []
 
@@ -349,7 +350,7 @@ function fixConvertErr(json: any) {
         const parameters = value.filter(i => i.in !== 'body')
         let name = `M${subject.operationId}Body`
         name = checkName(name, n => names.includes(n))
-        const schema = { originalRef: name, $ref: `#/definitions/${name}` }
+        const schema = { $ref: `#/definitions/${name}` }
         const bodyRef = { required: true, in: 'body', name, description: name, schema }
         parameters.push(bodyRef)
         subject.parameters = parameters

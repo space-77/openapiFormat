@@ -57,7 +57,6 @@ export default class Translate {
       // 不翻译
       const textEn = Translate.startCaseClassName(text.text)
       this.dictList.push({ en: textEn, zh: text.text })
-      console.log(textEn)
       text.resolve(textEn)
     } else if (this.type === TranslateType.pinyin) {
       // 转拼音
@@ -135,8 +134,12 @@ export default class Translate {
 
     if (texts.length > 0) {
       console.log(`正在翻译共翻译 ${texts.length} 条数据`)
-      return await this.onTranslate(texts, fixText)
-      // console.log('翻译完成')
+      try {
+        await this.onTranslate(texts, fixText)
+      } catch (error) {
+        return Promise.reject(error)
+      }
+      console.log('翻译完成')
     }
   }
 }
