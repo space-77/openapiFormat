@@ -42,7 +42,7 @@ const dictPath = path.join(__dirname, '../mock/dict.json')
     const { dict }: any = require(dictPath) ?? { dict: [] }
     // const dictList: any[] = []
     // console.log(dictList)
-    const res = await docInit(json, dict)
+    const res = await docInit(url, dict)
     console.log(res.dictList)
     // console.log('----------')
     // console.log('----------')

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import axios from 'axios'
 import DocApi from './docApi'
+import { jsonrepair } from 'jsonrepair'
 import { checkName } from './common/utils'
 import type { OpenAPIV3 } from 'openapi-types'
 import Translate, { DictList, TranslateType } from './common/translate'
@@ -389,9 +390,19 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
       if (_.isObject(url)) {
         data = url
       } else {
-        const res = await axios.get(url)
-        data = res.data
+        const { data: _data } = await axios.get(url)
+        if (typeof _data === 'string') {
+          try {
+            data = JSON.parse(jsonrepair(_data))
+          } catch (error) {
+            throw new Error(`${url}: api 数据格式异常(不是标准JSON格式)`)
+          }
+        } else {
+          data = _data
+        }
+        // data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
       }
+
       if (data.swagger === '2.0') {
         fixConvertErr(data)
         const { dictList: newDictList } = await translate(data, dictList, translateType)
@@ -402,6 +413,9 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
           }
           const json = options.openapi as OpenAPIV3.Document
           formatOpenapi3Name(json)
+
+          console.log(typeof json)
+
           resolve({ json, dictList: newDictList })
         })
       } else {
@@ -419,6 +433,8 @@ export default async function (url: string | object, dictList: DictList[] = [], 
   const { translateType } = options ?? {}
   try {
     const res = await getApiData(url, dictList, translateType)
+
+    // console.log(res)
 
     const docApi = new DocApi(res.json)
     await docApi.init()
