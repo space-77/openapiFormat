@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import balanced from 'balanced-match'
+// import balanced from 'balanced-match'
 
 /**
  * @param str
@@ -82,13 +82,13 @@ export function getIdentifierFromUrl(url: string, requestType: string, samePath 
   )
 }
 
-export function formatRefTag(ref: string) {
-  const startTag = '«'
-  const endTag = '»'
-  const reg = new RegExp(`${startTag}.+${endTag}`)
-  if (!reg.test(ref)) return ref
-  const { body } = balanced(startTag, endTag, ref) ?? {}
-}
+// export function formatRefTag(ref: string) {
+//   const startTag = '«'
+//   const endTag = '»'
+//   const reg = new RegExp(`${startTag}.+${endTag}`)
+//   if (!reg.test(ref)) return ref
+//   const { body } = balanced(startTag, endTag, ref) ?? {}
+// }
 
 export function isObject(obj: any) {
   return (typeof obj === 'object' || typeof obj === 'function') && obj !== null
