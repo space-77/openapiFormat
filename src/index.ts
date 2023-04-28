@@ -7,7 +7,7 @@ import Parameters from './docApi/components/parameters'
 import RequestBodies from './docApi/components/requestBodies'
 import TypeInfoBase, { RefItem } from './docApi/components/base'
 import DocApi, { PathInfo, PathItem, FuncGroup, FuncGroupItem, FuncGroupList } from './docApi/index'
-import Translate, { DictList, TranslateCode } from './common/translate'
+import Translate, { DictList, TranslateCode, TranslateType } from './common/translate'
 export * as Openapi from './types/openapi'
 
 export default start
@@ -26,6 +26,7 @@ export {
   DictList,
   Translate,
   TranslateCode,
+  TranslateType,
   Custom,
   Schemas,
   RefItem,
