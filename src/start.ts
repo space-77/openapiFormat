@@ -8,6 +8,7 @@ import Translate, { DictList, TranslateType } from './common/translate'
 
 const isChinese = require('is-chinese')
 const converter = require('swagger2openapi')
+const isKeyword = require('is-es2016-keyword')
 const deepForEach = require('deep-for-each')
 
 const tagType = 'tag'
@@ -69,61 +70,7 @@ function translateTagNames(options: TagNamesOp) {
       }
       rootTag.push({ name, description: name })
     }
-
-    //
   })
-
-  // itemTags.map(async text => {
-  //   const tag = tagsTranslateList.find(i => i.text === text)
-  //   if (!text.split('').some(isChinese)) {
-  //     // 英文
-  //     const tagInfo = data.tags?.find(i => i.name === text)
-
-  //     // 如果 openapi.tags 没找到对应的tag,则需要添加
-  //     if (!tagInfo) {
-  //       if (!Array.isArray(data.tags)) data.tags = []
-  //       data.tags.push({ name: text, description: text })
-  //     }
-
-  //     // 模块名为英文，不需要翻译
-  //     return
-  //   }
-  //   if (!tag) {
-  //     const tagItem = { subjects: [subject], text, textEn: '' }
-  //     tagsTranslateList.push(tagItem)
-
-  //     let textEn = await t.addTranslate(text, tagType)
-  //     textEn = checkName(textEn, name => tagsTranslateList.some(i => i.textEn === name))
-
-  //     const tagInfo = rootTag.find(tag => tag.name === text || tag.description === text)
-  //     if (!tagInfo) {
-  //       if (!Array.isArray(data.tags)) data.tags = []
-  //       // 可能存在英文名字，需要检查一下
-  //       textEn = checkName(textEn, n => !!data.tags!.find(i => i.name === n))
-  //       const tag = { name: textEn, description: text }
-  //       data.tags.push(tag)
-  //     } else {
-  //       // if ((tagInfo.description = text)) {
-  //       //   // name 和 description 互换了
-  //       //   // const { description } = tagInfo
-  //       //   // let name = checkName(tagInfo.description, n => )
-  //       //   // tagInfo
-  //       // } else {
-  //       // }
-  //       tagInfo.name = textEn
-  //       tagInfo.description = text
-  //     }
-
-  //     tagItem.subjects.forEach(subject => {
-  //       const index = subject.tags.findIndex(i => i === text)
-  //       if (index > -1) subject.tags[index] = textEn // 替换原有的 tag 名称
-  //     })
-
-  //     tagItem.textEn = textEn
-  //   } else {
-  //     tag.subjects.push(subject as any)
-  //   }
-  // })
 }
 
 function fixTagName(textEn: string, type?: string) {
@@ -132,6 +79,7 @@ function fixTagName(textEn: string, type?: string) {
   if (nameList.length > 1) {
     textEn = textEn.replace(new RegExp(`(${fixNames.join('|')})$`, 'i'), '')
   }
+  if (isKeyword(textEn)) textEn = `my${_.toUpper(textEn)}`
   return textEn.trim()
 }
 
@@ -395,32 +343,30 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
           try {
             data = JSON.parse(jsonrepair(_data))
           } catch (error) {
-            throw new Error(`${url}: api 数据格式异常(不是标准JSON格式)`)
+            throw new Error(`${url}: The data format is abnormal (not the standard JSON format)`)
           }
         } else {
           data = _data
         }
-        // data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
       }
 
-      if (data.swagger === '2.0') {
+      if (/^2\.\d+/.test(data.swagger)) {
         fixConvertErr(data)
         const { dictList: newDictList } = await translate(data, dictList, translateType)
         converter.convertObj(data, { components: true }, function (err: any, options: any) {
           if (err) {
-            reject(err?.message ?? 'swagger2.0 to openapi3.0 error')
+            reject(err?.message ?? 'swagger2 to openapi3 error')
             return
           }
           const json = options.openapi as OpenAPIV3.Document
           formatOpenapi3Name(json)
-
-          console.log(typeof json)
-
           resolve({ json, dictList: newDictList })
         })
-      } else {
+      } else if (/^3\.\d+/.test(data.swagger)) {
         const { dictList: newDictList } = await translateV3(data, dictList, translateType)
         resolve({ json: data, dictList: newDictList })
+      } else {
+        throw new Error("Not swagger's JSON")
       }
     } catch (error) {
       reject(error)
@@ -433,8 +379,6 @@ export default async function (url: string | object, dictList: DictList[] = [], 
   const { translateType } = options ?? {}
   try {
     const res = await getApiData(url, dictList, translateType)
-
-    // console.log(res)
 
     const docApi = new DocApi(res.json)
     await docApi.init()
