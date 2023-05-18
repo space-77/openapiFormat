@@ -1,4 +1,4 @@
-import start from './start'
+import format from './format'
 import TypeItem from './docApi/typeItem'
 import Components, { TypeInfoItem, ModuleName } from './docApi/components'
 import Custom from './docApi/components/custom'
@@ -10,7 +10,7 @@ import DocApi, { PathInfo, PathItem, FuncGroup, FuncGroupItem, FuncGroupList } f
 import Translate, { DictList, TranslateCode, TranslateType } from './common/translate'
 export * as Openapi from './types/openapi'
 
-export default start
+export default format
 
 export {
   DocApi,

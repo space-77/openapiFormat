@@ -1,6 +1,8 @@
 import _ from 'lodash'
 import { iflyrecTranslator, baiduTranslator, bingTranslator, Languages } from 'node-translates'
 import { pinyin } from 'pinyin-pro'
+import { isWord } from './utils'
+// import { isWordCharacter } from 'is-word-character'
 const isChinese = require('is-chinese')
 
 export type DictList = { zh: string; en: string | null; form?: '讯飞' | '百度' | '微软' }
@@ -52,26 +54,25 @@ export default class Translate {
     throw new Error(errStr)
   }
 
+  protected toPinyin(text: string) {
+    const texts = text.split('')
+    let newTexts: string[] = []
+    for (let i = 0; i < texts.length; i++) {
+      const t = texts[i]
+      if (isChinese(t)) {
+        newTexts.push(`--${pinyin(t, { toneType: 'none' })}`)
+      } else {
+        newTexts.push(t)
+      }
+    }
+    return Translate.startCaseClassName(newTexts.join(''))
+  }
+
   protected async _translate(text: WaitTranslate, fixText?: FixText, engineIndex = 0) {
-    if (this.type === TranslateType.none) {
-      // 不翻译
-      const textEn = Translate.startCaseClassName(text.text)
-      this.dictList.push({ en: textEn, zh: text.text })
-      text.resolve(textEn)
-    } else if (this.type === TranslateType.pinyin) {
+    if (this.type === TranslateType.pinyin || this.type === TranslateType.none) {
       // 转拼音
       try {
-        const texts = text.text.split('')
-        let newTexts: string[] = []
-        for (let i = 0; i < texts.length; i++) {
-          const t = texts[i]
-          if (isChinese(t)) {
-            newTexts.push(`--${pinyin(t, { toneType: 'none' })}`)
-          } else {
-            newTexts.push(t)
-          }
-        }
-        const textEn = Translate.startCaseClassName(newTexts.join(''))
+        const textEn = this.toPinyin(text.text)
         this.dictList.push({ en: textEn, zh: text.text })
         text.resolve(textEn)
       } catch (error) {

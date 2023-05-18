@@ -2,7 +2,7 @@ import _ from 'lodash'
 import axios from 'axios'
 import DocApi from './docApi'
 import { jsonrepair } from 'jsonrepair'
-import { checkName } from './common/utils'
+import { checkName, isWord } from './common/utils'
 import type { OpenAPIV3 } from 'openapi-types'
 import Translate, { DictList, TranslateType } from './common/translate'
 
@@ -177,6 +177,37 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
 }
 
 async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType?: TranslateType) {
+  if (translateType === TranslateType.none) {
+    // TODO 整理即可
+    deepForEach(data, (value: any, key: string, subject: any) => {
+      if (key === '$ref') {
+        const json = data as any
+        const [, onePath, towPath, refName] = (value as string).split('/')
+        const text = refName
+          .split('')
+          .filter(isWord)
+          .join('')
+          .replace(/^\d+\S+/, $1 => `N${$1}`)
+
+        if (text !== refName) {
+          // 有变更，需要修改引用
+          subject[key] = `#/${onePath}/${towPath}${text}`
+          const item = json[onePath][towPath][refName]
+          if (item) {
+            if (!json[onePath][towPath][text]) {
+              json[onePath][towPath][text] = data
+              delete json[onePath][towPath][refName]
+            } else {
+              throw new Error(`[还原中文]: #/${onePath}/${towPath}/${refName} 数据已存在`)
+            }
+          }
+        }
+      }
+    })
+
+    return { data, dictList }
+  }
+
   const t = new Translate(dictList, translateType)
   const textList: TextList[] = []
 
@@ -330,6 +361,44 @@ function fixConvertErr(json: any) {
   })
 }
 
+/**
+ * @description 还原成中文
+ * @param json openapi3
+ */
+function revertChinese(json: any, dictList: DictList[]) {
+  deepForEach(json, (value: any, key: string, subject: any) => {
+    if (key === '$ref') {
+      // #/components/schemas/xxx
+      const [, onePath, towPath, refName] = (value as string).split('/') as any[]
+      const { zh } = dictList.find(i => i.en === refName) ?? {}
+      if (zh) {
+        const text = zh
+          .split('')
+          .filter(isWord)
+          .join('')
+          .replace(/^\d+\S+/, $1 => `N${$1}`)
+        subject[key] = `#/${onePath}/${towPath}/${text}`
+
+        try {
+          const data = json[onePath][towPath][refName]
+          if (data) {
+            if (!json[onePath][towPath][text]) {
+              json[onePath][towPath][text] = data
+              delete json[onePath][towPath][refName]
+            } else {
+              throw new Error(`[还原中文]: #/${onePath}/${towPath}/${refName} 数据已存在`)
+            }
+          } else {
+            // 引用数据已近被改了，或者引用数据不存在
+          }
+        } catch (error) {
+          console.error('[还原中文]：数据引用异常', error)
+        }
+      }
+    }
+  })
+}
+
 type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
 async function getApiData(url: string | object, dictList: DictList[], translateType?: TranslateType) {
   return new Promise<ApiData>(async (resolve, reject) => {
@@ -360,6 +429,7 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
           }
           const json = options.openapi as OpenAPIV3.Document
           formatOpenapi3Name(json)
+          if (translateType === TranslateType.none) revertChinese(json, newDictList)
           resolve({ json, dictList: newDictList })
         })
       } else if (/^3\.\d+/.test(data.swagger)) {

@@ -1,3 +1,4 @@
+import fs from 'fs'
 import path from 'path'
 import { TranslateType } from './common/translate'
 import docInit from './index'
@@ -34,7 +35,7 @@ const url = 'http://124.70.8.166/manage/v2/api-docs'
 // const url = 'https://generator3.swagger.io/openapi.json'
 // const url = 'https://mock.mengxuegu.com/mock/6384cdec9433403d6c06894e/openapi3/mock'
 
-const json = require(path.join(__dirname, '../mock/err.json'))
+const json = require(path.join(__dirname, '../mock/swagger.json'))
 // // const openapi = new OpenApi(url)
 const dictPath = path.join(__dirname, '../mock/dict.json')
 ~(async () => {
@@ -42,8 +43,9 @@ const dictPath = path.join(__dirname, '../mock/dict.json')
     const { dict }: any = require(dictPath) ?? { dict: [] }
     // const dictList: any[] = []
     // console.log(dictList)
-    const res = await docInit(url, dict)
-    console.log(res.dictList)
+    const res = await docInit(json, dict, { translateType: TranslateType.none })
+    // console.log(res.docApi)
+    fs.writeFileSync(path.join(__dirname, '../mock/无翻译.json'), JSON.stringify(res.docApi.json, null, 2))
     // console.log('----------')
     // console.log('----------')
     // console.log('----------')

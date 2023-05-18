@@ -1,5 +1,8 @@
 import _ from 'lodash'
+// import isWordCharacter from 'is-word-character'
 // import balanced from 'balanced-match'
+const isWordCharacter = require('is-word-character')
+const isChinese = require('is-chinese')
 
 /**
  * @param str
@@ -194,4 +197,9 @@ export function transformCamelCase(name: string) {
   }
 
   return result
+}
+
+export function isWord(text: string): boolean {
+  if (isWordCharacter(text)) return true
+  return isChinese(text)
 }
