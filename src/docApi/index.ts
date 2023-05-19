@@ -167,6 +167,7 @@ export default class DocApi {
         const { item, method, apiPath } = funInfo
         let name = this.createFunName(apiPath, samePath, method, item.operationId)
         name = name.replace(sameName, '')
+        if (names.has(name)) name += _.upperFirst(method)
         name = checkName(name, checkName => names.has(checkName))
         names.add(name)
 
