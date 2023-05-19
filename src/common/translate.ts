@@ -37,10 +37,15 @@ export default class Translate {
   //   return this.dictList.some(i => i.zh === key)
   // }
 
-  static startCaseClassName(textEn: string, maxWordLen = 5) {
+  static startCaseClassName(textEn: string, type: TranslateType, maxWordLen = 5) {
     let wordArray = _.startCase(textEn).split(' ').filter(Boolean)
+
     if (wordArray.length > maxWordLen) {
-      wordArray = [...wordArray.slice(0, maxWordLen - 1), ...wordArray.slice(-1)]
+      if (type === TranslateType.english) {
+        wordArray = [...wordArray.slice(0, maxWordLen - 1), ...wordArray.slice(-1)]
+      } else {
+        wordArray = wordArray.slice(0, maxWordLen)
+      }
     }
 
     // 处理以数字开头的异常
@@ -54,7 +59,7 @@ export default class Translate {
     throw new Error(errStr)
   }
 
-  protected toPinyin(text: string) {
+  protected toPinyin(text: string, type: TranslateType) {
     const texts = text.split('')
     let newTexts: string[] = []
     for (let i = 0; i < texts.length; i++) {
@@ -65,14 +70,14 @@ export default class Translate {
         newTexts.push(t)
       }
     }
-    return Translate.startCaseClassName(newTexts.join(''))
+    return Translate.startCaseClassName(newTexts.join(''), type)
   }
 
   protected async _translate(text: WaitTranslate, fixText?: FixText, engineIndex = 0) {
     if (this.type === TranslateType.pinyin || this.type === TranslateType.none) {
       // 转拼音
       try {
-        const textEn = this.toPinyin(text.text)
+        const textEn = this.toPinyin(text.text, this.type)
         this.dictList.push({ en: textEn, zh: text.text })
         text.resolve(textEn)
       } catch (error) {
@@ -86,7 +91,7 @@ export default class Translate {
       try {
         const { dst } = await this.engines[engineIndex].t({ text: text.text, from: Languages.ZH, to: Languages.EN })
         let textEn = typeof fixText === 'function' ? fixText(dst, text.type) : dst
-        textEn = Translate.startCaseClassName(textEn)
+        textEn = Translate.startCaseClassName(textEn, this.type)
         this.dictList.push({ en: textEn, zh: text.text })
         text.resolve(textEn)
       } catch (error) {

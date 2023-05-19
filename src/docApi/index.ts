@@ -1,4 +1,4 @@
-import Translate, { DictList } from '../common/translate'
+import Translate, { TranslateType } from '../common/translate'
 import Components from './components'
 import ComponentsBase from './components/base'
 import type { OpenAPIV3 } from 'openapi-types'
@@ -105,7 +105,7 @@ export default class DocApi {
               tagInfo.name = description
             }
 
-            let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name))
+            let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name), TranslateType.english)
             moduleName = checkName(moduleName, n => !!moduleList.find(i => i.moduleName === n))
 
             moduleList.push({ moduleName, tag, funs: [funItem], tagInfo })

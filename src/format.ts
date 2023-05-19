@@ -6,8 +6,8 @@ import { checkName, isChinese, isWord } from './common/utils'
 import type { OpenAPIV3 } from 'openapi-types'
 import Translate, { DictList, TranslateType } from './common/translate'
 import converter from 'swagger2openapi'
-import isKeyword from 'is-es2016-keyword'
 
+const isKeyword = require('is-es2016-keyword')
 const deepForEach = require('deep-for-each')
 
 const tagType = 'tag'
@@ -15,6 +15,7 @@ const fixNames = ['Interface', 'module']
 
 type Subject = { $ref: string; title?: string; tags?: string[] }
 type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
+type RevertChineseRef = { zh: string; ref: string; subjects: any[]; key: string }
 type TextList = { subjects: Subject[]; text: string; translateProm: Promise<string>; textEn?: string }
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string; translateProm: Promise<string> }
 
@@ -35,7 +36,7 @@ function translateTagNames(options: TagNamesOp) {
 
       tagsTranslateList.push(newTItem)
       tagTextEn = await translateProm
-      tagTextEn = Translate.startCaseClassName(tagTextEn, 3)
+      tagTextEn = Translate.startCaseClassName(tagTextEn, t.type, 3)
 
       tagTextEn = checkName(tagTextEn, n => !!rootTag.find(i => i.name === n))
       newTItem.textEn = tagTextEn
@@ -99,12 +100,17 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
     const item = textList.find(i => i.text === text)
     if (!item) {
       const textTranslateProm = t.addTranslate(text)
-      const newItem: TextList = { subjects: [subject], text: text, translateProm: textTranslateProm }
+      const newItem: TextList = { subjects: [subject], text, translateProm: textTranslateProm }
       textList.push(newItem)
-      textEn = await textTranslateProm
+      const _textEn = await textTranslateProm
 
       // 查重,是否已存在相同的译文：如 你 翻译成 you, 但是 您 也可以翻译成 you
-      textEn = checkName(textEn, checkName => textList.some(i => i.text === checkName))
+      const textEn = checkName(_textEn, checkName => textList.some(i => i.textEn === checkName))
+
+      if (_textEn !== textEn) {
+        const tData = dictList.find(i => i.zh === text)
+        if (tData) tData.en = textEn
+      }
 
       newItem.textEn = textEn
       newItem.subjects.forEach(i => {
@@ -114,6 +120,9 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
     } else {
       item.subjects.push(subject)
       textEn = await item.translateProm
+      if (textEn === 'N2CDuanTi3') {
+        console.log('textEn')
+      }
     }
 
     return textEn
@@ -188,7 +197,7 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
  * @param translateType
  * @description OpenApi3.x 数据翻译
  */
-async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType?: TranslateType) {
+async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType = TranslateType.english) {
   if (translateType === TranslateType.none) {
     // TODO 整理即可
     deepForEach(data, (value: any, key: string, subject: any) => {
@@ -234,7 +243,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
           const newItem: TextList = { text: refNname, subjects: [subject], translateProm: translateProm }
           textList.push(newItem)
           textEn = await translateProm
-          newItem.textEn = checkName(textEn, n => !!textList.find(i => (i.textEn = n)))
+          newItem.textEn = checkName(textEn, n => !!textList.find(i => i.textEn === n))
           newItem.subjects.forEach(i => {
             i.$ref = i.$ref.replace(refNname, textEn)
           })
@@ -253,7 +262,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
       translateTagNames({ t, itemTags: value, subject: subject as any, data })
     } else if (key === 'operationId') {
       // 处理 方法名带下横杠
-      subject.operationId = Translate.startCaseClassName(value)
+      subject.operationId = Translate.startCaseClassName(value, translateType)
     }
   })
 
@@ -281,51 +290,91 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
 /**
  * @desc 修复 swagger 转openAPI后变量名字太长问题
  */
-function formatOpenapi3Name(json: any) {
+function formatOpenapi3Name(json: any, dictList: DictList[], translateType = TranslateType.english) {
+  const refs: RevertChineseRef[] = []
   const names = new Set<string>([])
   const textMap: Record<string, any> = {}
+
   const { components } = json
   if (!components) return
 
   deepForEach(json, (value: any, key: string, subject: any) => {
     if (key === '$ref') {
-      const [, , moduleName, refNname] = value.split('/')
+      // #/components/schemas/TongYongXiangYingTi_List_YueDuLingShouJi_
+      // 先收集后统一处理
 
-      let newName = Translate.startCaseClassName(refNname)
-      if (newName === refNname) return
+      const [, , moduleName, typeName] = (value as string).split('/')
 
-      const moduleItem = textMap[moduleName]
+      // [TongYongXiangYingTi,List,YueDuLingShouJi]
+      const nameList = typeName.replace(/_$/, '').split('_')
+      const firstName = nameList[nameList.length - 1] // YueDuLingShouJi
+      const secondName = nameList[nameList.length - 2] // List
 
-      if (!moduleItem) {
-        newName = checkName(newName, checkName => names.has(checkName))
-        names.add(newName)
-        textMap[moduleName] = { refNname: newName }
+      if (translateType === TranslateType.none) {
+        // TongYongXiangYingTi_FenYeTongYongXiang_N2BDuanYongHu1_
+        // TongYongXiangYingTi_List_WorkFlowConfigTypeResponse_
+        let { zh } = dictList.find(i => i.en === typeName) ?? {}
+        if (!zh && nameList.length > 1) {
+          const { zh: zhFirstName = firstName } = dictList.find(i => i.en === firstName) ?? {}
+          const { zh: zhSecondName = secondName } = dictList.find(i => i.en === secondName) ?? {}
+          // zh = `${zhFirstName}${zhSecondName}`
+          zh = zhFirstName
+        }
+
+        if (zh) {
+          const refItem = refs.find(i => i.ref === value)
+          if (!refItem) {
+            refs.push({ zh, key, ref: value, subjects: [subject] })
+          } else {
+            refItem.subjects.push(subject)
+          }
+        }
       } else {
-        if (moduleItem[refNname]) {
-          // 如果模块中已近存在了新名字，则直接使用模块的新名字
-          newName = moduleItem[refNname]
-        } else {
+        if (nameList.length <= 1) return
+
+        const refNname = firstName + secondName // YueDuLingShouJiList
+        const maxCount = translateType === TranslateType.pinyin ? 6 : 7
+        let newName = Translate.startCaseClassName(refNname, translateType, maxCount)
+        if (newName === refNname) return
+
+        const moduleItem = textMap[moduleName]
+
+        if (!moduleItem) {
           newName = checkName(newName, checkName => names.has(checkName))
           names.add(newName)
-          moduleItem[refNname] = newName
+          textMap[moduleName] = { refNname: newName }
+        } else {
+          if (moduleItem[refNname]) {
+            // 如果模块中已近存在了新名字，则直接使用模块的新名字
+            newName = moduleItem[refNname]
+          } else {
+            newName = checkName(newName, checkName => names.has(checkName))
+            names.add(newName)
+            moduleItem[refNname] = newName
+          }
         }
+        subject.$ref = subject.$ref.replace(refNname, newName)
       }
-      subject.$ref = subject.$ref.replace(refNname, newName)
     }
   })
 
-  Object.entries(textMap).forEach(([moduleName, names]) => {
-    const moduleItem = components[moduleName]
-    if (!moduleItem || !_.isObject(names)) return
-    Object.entries(names).forEach(([key, name]) => {
-      if (key === name) return
-      const moduleValue = moduleItem[key]
-      if (moduleValue) {
-        moduleItem[name] = moduleValue
-        delete moduleItem[key]
-      }
+  if (translateType === TranslateType.none) {
+    // 还原成中文
+    revertChinese(json, dictList, refs)
+  } else {
+    Object.entries(textMap).forEach(([moduleName, names]) => {
+      const moduleItem = components[moduleName]
+      if (!moduleItem || !_.isObject(names)) return
+      Object.entries(names).forEach(([key, name]) => {
+        if (key === name) return
+        const moduleValue = moduleItem[key]
+        if (moduleValue) {
+          moduleItem[name] = moduleValue
+          delete moduleItem[key]
+        }
+      })
     })
-  })
+  }
 }
 
 /**
@@ -381,35 +430,46 @@ function fixConvertErr(json: any) {
  * @param json openapi3
  * @description 还原成中文
  */
-function revertChinese(json: any, dictList: DictList[]) {
-  deepForEach(json, (value: any, key: string, subject: any) => {
-    if (key === '$ref') {
-      // #/components/schemas/xxx
-      const [, onePath, towPath, refName] = (value as string).split('/') as any[]
-      const { zh } = dictList.find(i => i.en === refName) ?? {}
-      if (zh) {
-        const text = zh
-          .split('')
-          .filter(isWord)
-          .join('')
-          .replace(/^\d+\S+/, $1 => `N${$1}`)
-        subject[key] = `#/${onePath}/${towPath}/${text}`
-        try {
-          const data = json[onePath][towPath][refName]
-          if (data) {
-            if (!json[onePath][towPath][text]) {
-              json[onePath][towPath][text] = data
-              delete json[onePath][towPath][refName]
-            } else {
-              throw new Error(`[还原中文]: #/${onePath}/${towPath}/${refName} 数据已存在`)
-            }
-          } else {
-            // 引用数据已近被改了，或者引用数据不存在
-          }
-        } catch (error) {
-          console.error('[还原中文]：数据引用异常', error)
+function revertChinese(json: any, dictList: DictList[], refs: RevertChineseRef[]) {
+  refs.forEach(({ zh, ref, key, subjects }) => {
+    const [, onePath, towPath, refName] = ref.split('/')
+    let text = zh
+      .split('')
+      .filter(isWord)
+      .join('')
+      .replace(/^\d+\S+/, $1 => `N${$1}`)
+
+    let refPreData = json?.[onePath]?.[towPath]
+    if (!refPreData) return
+    text = checkName(text, name => refPreData[name] !== undefined)
+    const data = refPreData[refName]
+    if (data) {
+      refPreData[text] = data
+      delete refPreData[refName]
+    } else {
+      throw new Error(`[还原中文]: 数据异常 ${ref} 引用数据不存在`)
+    }
+
+    subjects.forEach(subject => {
+      subject[key] = `#/${onePath}/${towPath}/${text}`
+    })
+  })
+
+  Object.entries(json.components).forEach(([pewKey, preData]) => {
+    if (typeof preData === 'object' && preData !== null) {
+      Object.entries(preData).forEach(([key, value]) => {
+        const { zh } = dictList.find(i => i.en === key) ?? {}
+        if (zh) {
+          const text = zh
+            .split('')
+            .filter(isWord)
+            .join('')
+            .replace(/^\d+\S+/, $1 => `N${$1}`)
+
+          json.components[pewKey][text] = value
+          delete json.components[pewKey][key]
         }
-      }
+      })
     }
   })
 }
@@ -444,8 +504,8 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
             return
           }
           const json = options.openapi
-          formatOpenapi3Name(json)
-          if (translateType === TranslateType.none) revertChinese(json, newDictList)
+          formatOpenapi3Name(json, newDictList, translateType)
+
           resolve({ json, dictList: newDictList })
         })
       } else if (/^3\.\d+/.test(data.swagger)) {

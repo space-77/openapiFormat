@@ -106,6 +106,10 @@ export function getEnumType(type: string, enumTypes: any[] = []) {
   return type
 }
 
+/**
+ * @param name 
+ * @param checkFun 不成立条件【继续改名的条件】
+ */
 export function checkName(name: string, checkFun: (name: string) => boolean): string {
   const hasName = checkFun(name)
   const lastNumReg = /((?!0)\d+)$/
