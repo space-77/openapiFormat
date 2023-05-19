@@ -10,11 +10,12 @@ import {
   getIdentifierFromUrl,
   getMaxSamePath,
   getSameName,
+  isChinese,
   transformCamelCase
 } from '../common/utils'
 import _ from 'lodash'
 
-const isChinese = require('is-chinese')
+// const isChinese = require('is-chinese')
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -106,7 +107,6 @@ export default class DocApi {
 
             let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name))
             moduleName = checkName(moduleName, n => !!moduleList.find(i => i.moduleName === n))
-
 
             moduleList.push({ moduleName, tag, funs: [funItem], tagInfo })
           } else {

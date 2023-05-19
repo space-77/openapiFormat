@@ -2,19 +2,19 @@ import _ from 'lodash'
 import axios from 'axios'
 import DocApi from './docApi'
 import { jsonrepair } from 'jsonrepair'
-import { checkName, isWord } from './common/utils'
+import { checkName, isChinese, isWord } from './common/utils'
 import type { OpenAPIV3 } from 'openapi-types'
 import Translate, { DictList, TranslateType } from './common/translate'
+import converter from 'swagger2openapi'
+import isKeyword from 'is-es2016-keyword'
 
-const isChinese = require('is-chinese')
-const converter = require('swagger2openapi')
-const isKeyword = require('is-es2016-keyword')
 const deepForEach = require('deep-for-each')
 
 const tagType = 'tag'
 const fixNames = ['Interface', 'module']
 
 type Subject = { $ref: string; title?: string; tags?: string[] }
+type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
 type TextList = { subjects: Subject[]; text: string; translateProm: Promise<string>; textEn?: string }
 type TagsList = { subjects: { tags: string[] }[]; text: string; textEn?: string; translateProm: Promise<string> }
 
@@ -83,6 +83,12 @@ function fixTagName(textEn: string, type?: string) {
   return textEn.trim()
 }
 
+/**
+ * @param data swagger2.x json
+ * @param dictList cache translation
+ * @param translateType
+ * @description swagger2.x 数据翻译
+ */
 async function translate(data: any, dictList: DictList[], translateType?: TranslateType) {
   const t = new Translate(dictList, translateType)
   const textList: TextList[] = []
@@ -176,6 +182,12 @@ async function translate(data: any, dictList: DictList[], translateType?: Transl
   return { data, dictList: t.dictList }
 }
 
+/**
+ * @param data OpenApi3.x json
+ * @param dictList cache translation
+ * @param translateType
+ * @description OpenApi3.x 数据翻译
+ */
 async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType?: TranslateType) {
   if (translateType === TranslateType.none) {
     // TODO 整理即可
@@ -316,6 +328,10 @@ function formatOpenapi3Name(json: any) {
   })
 }
 
+/**
+ * @param json swagger2.x json
+ * @description 修复 swagger2 json 不规范问题
+ */
 function fixConvertErr(json: any) {
   deepForEach(json.paths, (value: any, key: string, subject: any) => {
     if (key === 'parameters' && Array.isArray(value)) {
@@ -362,8 +378,8 @@ function fixConvertErr(json: any) {
 }
 
 /**
- * @description 还原成中文
  * @param json openapi3
+ * @description 还原成中文
  */
 function revertChinese(json: any, dictList: DictList[]) {
   deepForEach(json, (value: any, key: string, subject: any) => {
@@ -378,7 +394,6 @@ function revertChinese(json: any, dictList: DictList[]) {
           .join('')
           .replace(/^\d+\S+/, $1 => `N${$1}`)
         subject[key] = `#/${onePath}/${towPath}/${text}`
-
         try {
           const data = json[onePath][towPath][refName]
           if (data) {
@@ -399,7 +414,6 @@ function revertChinese(json: any, dictList: DictList[]) {
   })
 }
 
-type ApiData = { json: OpenAPIV3.Document; dictList: DictList[] }
 async function getApiData(url: string | object, dictList: DictList[], translateType?: TranslateType) {
   return new Promise<ApiData>(async (resolve, reject) => {
     try {
@@ -410,6 +424,7 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
         const { data: _data } = await axios.get(url)
         if (typeof _data === 'string') {
           try {
+            // 修复 JSON 格式异常【可能修复失败】
             data = JSON.parse(jsonrepair(_data))
           } catch (error) {
             throw new Error(`${url}: The data format is abnormal (not the standard JSON format)`)
@@ -419,15 +434,16 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
         }
       }
 
+      // swagger2.x 转换openapi 3
       if (/^2\.\d+/.test(data.swagger)) {
-        fixConvertErr(data)
+        fixConvertErr(data) // 修复 swagger2.x 结构异常
         const { dictList: newDictList } = await translate(data, dictList, translateType)
-        converter.convertObj(data, { components: true }, function (err: any, options: any) {
+        converter.convertObj(data, { components: true }, function (err, options) {
           if (err) {
-            reject(err?.message ?? 'swagger2 to openapi3 error')
+            reject(err.message ?? 'swagger2 to openapi3 error')
             return
           }
-          const json = options.openapi as OpenAPIV3.Document
+          const json = options.openapi
           formatOpenapi3Name(json)
           if (translateType === TranslateType.none) revertChinese(json, newDictList)
           resolve({ json, dictList: newDictList })

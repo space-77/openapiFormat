@@ -1,4 +1,4 @@
 declare module 'is-es2016-keyword' {
-  type isKeyword = (str: string) => boolean
+  const isKeyword = (str: string) => boolean
   export default isKeyword
 }
