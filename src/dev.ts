@@ -44,9 +44,10 @@ const dictPath = path.join(__dirname, '../mock/dict.json')
     const { dict }: any = require(dictPath) ?? { dict: [] }
     // const dictList: any[] = []
     // console.log(dictList)
-    const res = await docInit(url, dict, { translateType: TranslateType.none })
+    const res = await docInit(url, dict, { translateType: TranslateType.english })
     // console.log(res.docApi)
-    fs.writeFileSync(path.join(__dirname, '../mock/无翻译.json'), JSON.stringify(res.docApi.json, null, 2))
+    fs.writeFileSync(dictPath, JSON.stringify(res.dictList, null, 2))
+    fs.writeFileSync(path.join(__dirname, '../mock/无翻译2.json'), JSON.stringify(res.docApi.json, null, 2))
     // console.log('----------')
     // console.log('----------')
     // console.log('----------')
