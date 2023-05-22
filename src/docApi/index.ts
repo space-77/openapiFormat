@@ -7,6 +7,7 @@ import { HttpMethods, httpMethods } from '../common'
 import {
   checkName,
   firstToUpper,
+  fixStartNum,
   getIdentifierFromUrl,
   getMaxSamePath,
   getSameName,
@@ -161,14 +162,15 @@ export default class DocApi {
       const samePath = getMaxSamePath(funs.map(i => i.apiPath.slice(1)))
 
       const operationIds = funs.map(fun => fun.item.operationId).filter(Boolean) as string[]
-      const sameName = getSameName(operationIds)
+      const sameName = operationIds.length > 1 ? getSameName(operationIds) : ''
 
       const pathItems = funs.map(funInfo => {
         const { item, method, apiPath } = funInfo
         let name = this.createFunName(apiPath, samePath, method, item.operationId)
-        name = name.replace(sameName, '')
+        name = name.replace(new RegExp(`^${sameName}`), '')
         if (names.has(name)) name += _.upperFirst(method)
         name = checkName(name, checkName => names.has(checkName))
+        name = fixStartNum(name)
         names.add(name)
 
         const funItem = this.creatFunItem(funInfo, name, moduleName)
@@ -189,6 +191,7 @@ export default class DocApi {
   }
 
   private createFunName(apiPath: string, samePath: string, method: string, operationId?: string) {
+    // GetReportRepairInfo1
     if (operationId) {
       //  整理 operationId 作为方法名
       return operationId.replace(/(.+)(Using.+)/, '$1')

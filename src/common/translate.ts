@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { iflyrecTranslator, baiduTranslator, bingTranslator, Languages } from 'node-translates'
 import { pinyin } from 'pinyin-pro'
-import { isChinese, isWord } from './utils'
+import { fixStartNum, isChinese, isWord } from './utils'
 // import { isWordCharacter } from 'is-word-character'
 // const isChinese = require('is-chinese')
 
@@ -37,8 +37,8 @@ export default class Translate {
   //   return this.dictList.some(i => i.zh === key)
   // }
 
-  static startCaseClassName(textEn: string, type: TranslateType, maxWordLen = 5) {
-    let wordArray = _.startCase(textEn).split(' ').filter(Boolean)
+  static startCaseClassName(text: string, type: TranslateType, maxWordLen = 5) {
+    let wordArray = _.startCase(text).split(' ').filter(Boolean)
 
     if (wordArray.length > maxWordLen) {
       if (type === TranslateType.english) {
@@ -49,7 +49,7 @@ export default class Translate {
     }
 
     // 处理以数字开头的异常
-    return wordArray.join('').replace(/^\d+\S+/, $1 => `N${$1}`)
+    return fixStartNum(wordArray.join(''))
   }
 
   protected translateFail(text: WaitTranslate) {

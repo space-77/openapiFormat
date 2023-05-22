@@ -2,7 +2,7 @@ import _ from 'lodash'
 import axios from 'axios'
 import DocApi from './docApi'
 import { jsonrepair } from 'jsonrepair'
-import { checkName, isChinese, isWord } from './common/utils'
+import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
 import type { OpenAPIV3 } from 'openapi-types'
 import Translate, { DictList, TranslateType } from './common/translate'
 import converter from 'do-swagger2openapi'
@@ -109,8 +109,14 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
           textList.push(newItem)
           textEn = await translateProm
           newItem.textEn = checkName(textEn, n => !!textList.find(i => i.textEn === n))
+
+          if (newItem.textEn !== textEn) {
+            const dict = dictList.find(i => i.zh === refNname)
+            if (dict) dict.en = newItem.textEn
+          }
+
           newItem.subjects.forEach(i => {
-            i.$ref = i.$ref.replace(refNname, textEn)
+            i.$ref = i.$ref.replace(refNname, newItem.textEn!)
           })
         } else {
           item.subjects.push(subject)
@@ -158,11 +164,7 @@ function formatV3Name(data: any) {
     if (key === '$ref') {
       // #/components/schemas/TongYongXiangYingTi_List_YueDuLingShouJi
       const [, , , refName] = (value as string).split('/')
-      const text = refName
-        .split('')
-        .filter(isWord)
-        .join('')
-        .replace(/^\d+\S+/, $1 => `n${$1}`)
+      const text = fixStartNum(refName.split('').filter(isWord).join(''))
 
       if (text === refName) return
       const refItem = refs.find(i => i.ref === value)
@@ -214,7 +216,7 @@ function formatOpenapi3Name(json: any) {
 
       const refItem = refs.find(i => i.ref === value)
       if (!refItem) {
-        refs.push({ name: `${firstName}${secondName}`, key, ref: value, subjects: [subject] })
+        refs.push({ name: fixStartNum(`${secondName}${firstName}`), key, ref: value, subjects: [subject] })
       } else {
         refItem.subjects.push(subject)
       }
@@ -231,11 +233,7 @@ function formatOpenapi3Name(json: any) {
 function revertChinese(json: any, refs: RevertChineseRef[]) {
   refs.forEach(({ name, ref, key, subjects }) => {
     const [, onePath, towPath, refName] = ref.split('/')
-    let text = name
-      .split('')
-      .filter(isWord)
-      .join('')
-      .replace(/^\d+\S+/, $1 => `n${$1}`)
+    let text = fixStartNum(name.split('').filter(isWord).join(''))
 
     let refPreData = json?.[onePath]?.[towPath]
     if (!refPreData) return

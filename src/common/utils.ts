@@ -107,7 +107,7 @@ export function getEnumType(type: string, enumTypes: any[] = []) {
 }
 
 /**
- * @param name 
+ * @param name
  * @param checkFun 不成立条件【继续改名的条件】
  */
 export function checkName(name: string, checkFun: (name: string) => boolean): string {
@@ -211,4 +211,8 @@ export function isChinese(text: string) {
 export function isWord(text: string): boolean {
   if (isWordCharacter(text)) return true
   return isChinese(text)
+}
+
+export function fixStartNum(text: string) {
+  return text.replace(/^\d+\S+/, $1 => `n${$1}`)
 }
