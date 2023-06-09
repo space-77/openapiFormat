@@ -108,6 +108,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
           const newItem: TextList = { text: refNname, subjects: [subject], translateProm: translateProm }
           textList.push(newItem)
           textEn = await translateProm
+          textEn = fixStartNum(textEn)
           newItem.textEn = checkName(textEn, n => !!textList.find(i => i.textEn === n))
 
           if (newItem.textEn !== textEn) {
@@ -120,7 +121,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
           })
         } else {
           item.subjects.push(subject)
-          textEn = await item.translateProm
+          await item.translateProm
         }
       }
       const _data = data as any
@@ -144,6 +145,7 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
       Object.entries(moduleValue).forEach(async ([key, value]) => {
         if (key.split('').some(isChinese)) {
           let textEn = await t.addTranslate(key)
+          textEn = fixStartNum(textEn)
           textEn = checkName(textEn, n => moduleValue[n] !== undefined)
           if (!moduleValue[textEn]) {
             moduleValue[textEn] = value

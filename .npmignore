@@ -6,7 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 # dist/
 src
-types
 .vscode
 node_modules/
 *.yaml
