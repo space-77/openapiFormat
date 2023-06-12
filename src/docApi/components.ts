@@ -53,13 +53,13 @@ export default class Components {
   }
 
   pushTypeItem(typeInfo: TypeInfoBase, key?: string) {
-    if (key) {
-      const item = this.typeInfoList.find(i => i.key === key)
-      if (item) {
-        typeInfo.typeName = item.typeName
-        return
-      }
-    }
+    // if (key) {
+    //   const item = this.typeInfoList.find(i => i.key === key)
+    //   if (item) {
+    //     typeInfo.realBody = item.typeInfo
+    //   }
+    // }
+
     this.typeInfoList.push({ key, typeName: typeInfo.typeName, moduleName: typeInfo.moduleName, typeInfo })
   }
 
@@ -94,7 +94,6 @@ export default class Components {
   private createsPathType() {
     for (const pathItem of this.pathItems) {
       const { item, apiPath, method, name, bodyName, paramsName, responseName } = pathItem
-      const key = md5(apiPath + method)
 
       const { parameters, responses, requestBody, operationId } = item
       const { description, content = {} } = (responses['200'] as ResponseObject) ?? {}
@@ -103,6 +102,7 @@ export default class Components {
       const [responseInfo] = Object.entries(content).sort(([a], [b]) => b.length - a.length)
       if (responseInfo) {
         const [media, { schema, example, examples, encoding }] = responseInfo
+
         if (schema) {
           const option: SchemasOp = {
             parent: this,
@@ -113,21 +113,22 @@ export default class Components {
           }
           const response = new Schemas(option)
           // console.log(response.typeName);
-          this.pushTypeItem(response, key)
+          this.pushTypeItem(response, md5(apiPath + method + option.moduleName))
           pathItem.responseType = response
         }
       }
       if (parameters) {
+        // typeItems
         const option: ParametersOp = { parent: this, name: paramsName, datas: parameters, moduleName: 'parameters' }
         const parameter = new Parameters(option)
-        this.pushTypeItem(parameter, key)
+        this.pushTypeItem(parameter, md5(apiPath + method + option.moduleName))
         pathItem.parameterType = parameter
       }
 
       if (requestBody) {
         const option: RequestBodiesOp = { parent: this, name: bodyName, data: requestBody, moduleName: 'requestBodies' }
         const requestBodies = new RequestBodies(option)
-        this.pushTypeItem(requestBodies, key)
+        this.pushTypeItem(requestBodies, md5(apiPath + method + option.moduleName))
         pathItem.requestBodyType = requestBodies
       }
     }
