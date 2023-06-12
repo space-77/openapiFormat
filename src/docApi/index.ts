@@ -83,6 +83,8 @@ export default class DocApi {
     const moduleList: FuncGroup[] = []
     const funData = Object.entries(paths)
 
+    const notTagDes = 'Method without tag'
+
     for (const [apiPath, pathsObject] of funData) {
       if (!pathsObject) break
 
@@ -95,12 +97,12 @@ export default class DocApi {
         tags.forEach(tag => {
           const moduleItem = moduleList.find(i => i.tag === tag)
           if (!moduleItem) {
-            const tagInfo = (tagList.find(i => i.name === tag) as FuncGroup['tagInfo']) ?? {
+            const tagInfo = tagList.find(i => i.name === tag) ?? {
               name: 'index',
-              description: ''
+              description: notTagDes
             }
 
-            if (flip) {
+            if (flip && tagInfo.description !== notTagDes) {
               const { description = 'index' } = tagInfo
               tagInfo.description = tagInfo.name
               tagInfo.name = description
