@@ -1,6 +1,6 @@
 {
   "name": "doc-pre-data",
-  "version": "1.1.10",
+  "version": "1.1.12",
   "description": "整理openapi数据",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -25,19 +25,21 @@
   "dependencies": {
     "axios": "*",
     "deep-for-each": "^3.0.0",
+    "do-swagger2openapi": "^7.0.13",
     "is-chinese": "^2.0.0",
     "is-es2016-keyword": "^1.0.0",
     "is-word-character": "^1.0.4",
     "jsonrepair": "^3.0.2",
     "lodash": "*",
+    "md5": "*",
     "node-translates": "^1.3.3",
     "openapi": "^1.0.1",
     "openapi-types": "^12.0.2",
-    "pinyin-pro": "^3.13.1",
-    "do-swagger2openapi": "^7.0.13"
+    "pinyin-pro": "^3.13.1"
   },
   "devDependencies": {
     "@types/lodash": "*",
+    "@types/md5": "*",
     "@types/node": "^18.11.3",
     "ts-node": "^10.9.1",
     "typescript": "^4.8.4"

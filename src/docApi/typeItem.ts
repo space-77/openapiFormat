@@ -97,9 +97,10 @@ export default class TypeItem {
     if (typeInfo) {
       // 生成泛型
       content = typeInfo.typeName
-      const typeNameT = typeof genericsItem === 'string' ? genericsItem : genericsItem?.typeName
+      let typeNameT = typeof genericsItem === 'string' ? genericsItem : genericsItem?.typeName
+      if (typeNameT === 'Array') typeNameT = 'Array<any>'
       content += `<${typeNameT ?? 'any'}>`
-    }
+    } else if (content === 'Array') content = 'Array<any>'
 
     // FIXME 如果泛型存在，而且也有子类型，该怎么处理？
     if (children.length > 0) {
