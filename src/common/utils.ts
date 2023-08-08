@@ -175,24 +175,15 @@ export function transformCamelCase(name: string) {
   let words: string[] = []
   let result = ''
 
-  if (name.includes('-')) {
-    words = name.split('-')
-  } else if (name.includes(' ')) {
-    words = name.split(' ')
-  } else {
-    if (typeof name === 'string') {
-      result = name
-    } else {
-      throw new Error('mod name is not a string: ' + name)
-    }
+  if (name.includes('-')) words = name.split('-')
+  else if (name.includes(' ')) words = name.split(' ')
+  else {
+    if (typeof name === 'string') result = name
+    else throw new Error('mod name is not a string: ' + name)
   }
 
   if (words && words.length) {
-    result = words
-      .map(word => {
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      })
-      .join('')
+    result = words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('')
   }
 
   result = result.charAt(0).toLowerCase() + result.slice(1)
