@@ -259,7 +259,10 @@ function convert(data: any) {
   return new Promise((resolve, reject) => {
     converter.convertObj(data, { components: true }, (err, options) => {
       if (err) return reject(err.message ?? 'swagger2 to openapi3 error')
-      resolve(options.openapi)
+      const { convertMessage, openapi } = options
+      warnList.push(...convertMessage?.warnList ?? [])
+      errorList.push(...convertMessage?.errorList ?? [])
+      resolve(openapi)
     })
   })
 }
@@ -277,6 +280,7 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
             // 修复 JSON 格式异常【可能修复失败】
             data = JSON.parse(jsonrepair(_data))
           } catch (error) {
+            errorList.push({ msg: `${url}: The data format is abnormal (not the standard JSON format)` })
             throw new Error(`${url}: The data format is abnormal (not the standard JSON format)`)
           }
         } else {
@@ -296,6 +300,7 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
         const { dictList: newDictList } = await translateV3(data, dictList, translateType)
         resolve({ json: data, dictList: newDictList })
       } else {
+        errorList.push({ msg: `Not swagger's JSON` })
         throw new Error("Not swagger's JSON")
       }
     } catch (error) {

@@ -40,12 +40,13 @@ export default class Translate {
   static startCaseClassName(text: string, type: TranslateType, maxWordLen = 5) {
     let wordArray = _.startCase(text).split(' ').filter(Boolean)
 
-    // TODO 需要修改逻辑
-    if (wordArray.length > maxWordLen) {
-      if (type === TranslateType.english) {
-        wordArray = [...wordArray.slice(0, maxWordLen - 1), ...wordArray.slice(-1)]
-      } else {
-        wordArray = wordArray.slice(0, maxWordLen)
+    if (wordArray.join('').length > 24) {
+      if (wordArray.length > maxWordLen) {
+        if (type === TranslateType.english) {
+          wordArray = [...wordArray.slice(0, maxWordLen - 1), ...wordArray.slice(-1)]
+        } else {
+          wordArray = wordArray.slice(0, maxWordLen)
+        }
       }
     }
 

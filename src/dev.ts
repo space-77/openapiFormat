@@ -28,8 +28,8 @@ import docInit from './index'
 
 // // https://generator3.swagger.io/index.html
 // const url = 'http://localhost:9528/api.json'
-const url = 'https://omtest.gtcloud.cn/v2/api-docs'
-// const url = 'http://tlfete.cfldcn.com:8088/v2/api-docs'
+// const url = 'https://omtest.gtcloud.cn/v2/api-docs'
+const url = 'http://tlfete.cfldcn.com:8088/v2/api-docs'
 // const url = 'http://124.70.8.166/manage/v2/api-docs'
 // const url = 'http://tlfete.cfldcn.com:9100/v2/api-docs'
 // const url = 'http://114.115.202.183:8088/v2/api-docs'
