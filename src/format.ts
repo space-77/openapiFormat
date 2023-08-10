@@ -1,11 +1,12 @@
 import _ from 'lodash'
 import axios from 'axios'
 import DocApi from './docApi'
-import { jsonrepair } from 'jsonrepair'
-import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
-import type { OpenAPIV3 } from 'openapi-types'
-import Translate, { DictList, TranslateType } from './common/translate'
 import converter from 'do-swagger2openapi'
+import { jsonrepair } from 'jsonrepair'
+import type { OpenAPIV3 } from 'openapi-types'
+import { warnList, errorList } from './store/index'
+import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
+import Translate, { DictList, TranslateType } from './common/translate'
 
 const isKeyword = require('is-es2016-keyword')
 const deepForEach = require('deep-for-each')
@@ -311,7 +312,7 @@ export default async function (url: string | object, dictList: DictList[] = [], 
 
     const docApi = new DocApi(res.json)
     await docApi.init()
-    return { docApi, dictList: res.dictList }
+    return { docApi, dictList: res.dictList, warnList, errorList }
   } catch (error) {
     return Promise.reject(error)
   }

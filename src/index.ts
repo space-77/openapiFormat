@@ -8,6 +8,7 @@ import RequestBodies from './docApi/components/requestBodies'
 import TypeInfoBase, { RefItem } from './docApi/components/base'
 import DocApi, { PathInfo, PathItem, FuncGroup, FuncGroupItem, FuncGroupList } from './docApi/index'
 import Translate, { DictList, TranslateCode, TranslateType } from './common/translate'
+export type { LogInfo } from './store/index'
 
 export * as dotsUtils from './common/utils'
 export * as Openapi from './types/openapi'

@@ -15,6 +15,8 @@ import TypeItem from '../typeItem'
 import Schemas, { SchemasOp } from './schemas'
 import Components, { ModuleName } from '../components'
 import { firstToUpper, checkTsTypeKeyword } from '../../common/utils'
+import { warnList } from '../../store'
+import { PathItem } from '../index'
 
 // FIXME 类型继承，可能会存在这种怪异类型
 // interface TypeName extends Array<number> {
@@ -110,6 +112,7 @@ export default abstract class TypeInfoBase {
     if (type === 'file') return 'File'
     if (type === 'array') return 'Array'
     if (type === 'integer') return 'number'
+    if (type === 'object') return 'Record<string, any>'
     return type
   }
 
@@ -258,9 +261,16 @@ export default abstract class TypeInfoBase {
     })
   }
 
-  protected formatParameters(data: ParameterObject) {
-    const { name, in: paramType, deprecated, schema = {}, required, description, example } = data
+  protected formatParameters(data: ParameterObject, apiInfo?: PathItem) {
+    let { in: paramType } = data
+    const { name, deprecated, schema = {}, required, description, example } = data
     const typeItem = this.createSchemaType(name, { ...schema, deprecated, description, example }, required)
+    if (!paramType) {
+      paramType = apiInfo?.method === 'post' ? 'body' : 'query'
+      warnList.push({
+        msg: `接口：${apiInfo?.apiPath ?? '未知路径'} 的 "${name}" 请求参数类型未知，已归为到 ${paramType} 类型`
+      })
+    }
     typeItem.paramType = paramType as TypeItem['paramType']
     return typeItem
   }

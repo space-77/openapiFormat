@@ -120,7 +120,7 @@ export default class Components {
       if (parameters) {
         // typeItems
         const option: ParametersOp = { parent: this, name: paramsName, datas: parameters, moduleName: 'parameters' }
-        const parameter = new Parameters(option)
+        const parameter = new Parameters(option, pathItem)
         this.pushTypeItem(parameter, md5(apiPath + method + option.moduleName))
         pathItem.parameterType = parameter
       }
