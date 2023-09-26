@@ -266,7 +266,9 @@ export default abstract class TypeInfoBase {
     const { name, deprecated, schema = {}, required, description, example } = data
     const typeItem = this.createSchemaType(name, { ...schema, deprecated, description, example }, required)
     if (!paramType) {
-      paramType = apiInfo?.method === 'post' ? 'body' : 'query'
+      // TODO  在参数没有情况下需要纠正参数类型
+      // paramType = apiInfo?.method === 'post' ? 'body' : 'query'
+      paramType = 'query'
       warnList.push({
         msg: `接口：${apiInfo?.apiPath ?? '未知路径'} 的 "${name}" 请求参数类型未知，已归为到 ${paramType} 类型`
       })
