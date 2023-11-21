@@ -113,10 +113,13 @@ export default class TypeItem {
   getTypeValue(): string {
     const { name, required } = this
 
+    let key = name.replace(/-/g, '_')
+    if (/\./.test(key)) key = `'${key}'`
+
     const desc = this.getDesc()
     const typeValue = this.getKeyValue()
 
-    return `${desc}${name.replace(/-/g, '_')}${required ? '' : '?'}:${typeValue}\n`
+    return `${desc}${key}${required ? '' : '?'}:${typeValue}\n`
   }
 
   getDesc() {
