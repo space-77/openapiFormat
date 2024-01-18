@@ -7,6 +7,7 @@ import type { OpenAPIV3 } from 'openapi-types'
 import { warnList, errorList } from './store/index'
 import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
 import Translate, { DictList, TranslateType } from './common/translate'
+import type { Dict } from './types/index'
 
 const isKeyword = require('is-es2016-keyword')
 const deepForEach = require('deep-for-each')
@@ -260,8 +261,8 @@ function convert(data: any) {
     converter.convertObj(data, { components: true }, (err, options) => {
       if (err) return reject(err.message ?? 'swagger2 to openapi3 error')
       const { convertMessage, openapi } = options
-      warnList.push(...convertMessage?.warnList ?? [])
-      errorList.push(...convertMessage?.errorList ?? [])
+      warnList.push(...(convertMessage?.warnList ?? []))
+      errorList.push(...(convertMessage?.errorList ?? []))
       resolve(openapi)
     })
   })
@@ -309,15 +310,79 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
   })
 }
 
+function getAllOperationId(paths: OpenAPIV3.PathsObject<{}, {}>) {
+  // const { paths } = json
+  const idMap = new Map<string, { method: string; apiPath: string; info: OpenAPIV3.OperationObject }>()
+  Object.entries(paths).forEach(([apiPath, value]) => {
+    if (!value) return
+    Object.entries(value).forEach(([method, info]) => {
+      if (typeof info === 'object' && !Array.isArray(info) && info.operationId) {
+        idMap.set(info.operationId, { method, apiPath, info })
+      }
+    })
+  })
+
+  return idMap
+}
+
+function restoreCache({ json }: ApiData, cache: Dict['cache']) {
+  if (!cache) return
+  const { paths } = json
+
+  const idMap = getAllOperationId(paths)
+
+  Object.entries(paths).forEach(([apiPath, methodsObj]) => {
+    if (!methodsObj) return
+    Object.entries(methodsObj).forEach(([method, info]) => {
+      if (!info) return
+      const { idNames } = cache
+      const cacheKey = `${method}_${apiPath}`
+      if (typeof info === 'object' && !Array.isArray(info)) {
+        if (cacheKey in cache) {
+          // cache 存在对应数据
+          const id = info.operationId
+          if (!id) return
+
+          let cacheId = idNames[cacheKey]
+          if (cacheId === id) return
+
+          // 还原旧信息
+          info.operationId = cacheId
+          
+          const oldInfo = idMap.get(cacheId)
+          if (oldInfo) {
+            // 旧id是否被使用
+            const { method, apiPath, info: newMetInfo } = oldInfo
+            const newId = checkName(cacheId, n => !!idMap.get(n))
+            newMetInfo.operationId = newId
+            idMap.set(newId, oldInfo) // 修改和原id相同的信息
+            idNames[`${method}_${apiPath}`] = newId
+          }
+          idMap.set(cacheId, { method, apiPath, info }) // 修改 原id信息
+        } else if (info.operationId) {
+          // cache 不存在对应数据
+          idNames[cacheKey] = info.operationId
+        }
+      }
+    })
+  })
+}
+
 type Options = { translateType?: TranslateType }
-export default async function (url: string | object, dictList: DictList[] = [], options?: Options) {
+export default async function (url: string | object, dict?: Dict, options?: Options) {
   const { translateType } = options ?? {}
+  const { dict: dictList = [] } = dict ?? {}
   try {
     const res = await getApiData(url, dictList, translateType)
 
+    if (dict) {
+      if (!dict.cache) dict.cache = { idNames: {}, returnTypeNames: {}, requestTypeNames: {} }
+      restoreCache(res, dict.cache)
+    }
+
     const docApi = new DocApi(res.json)
     await docApi.init()
-    return { docApi, dictList: res.dictList, warnList, errorList }
+    return { docApi, dictList: res.dictList, warnList, errorList, cache: dict!.cache }
   } catch (error) {
     return Promise.reject(error)
   }
