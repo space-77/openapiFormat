@@ -9,9 +9,16 @@ import { checkName } from '../common/utils'
 import TypeInfoBase from './components/base'
 import Custom, { CustomObject, CustomOp } from './components/custom'
 import type { Document, ResponseObject } from '../types/openapi'
+import { commonTypeKey } from '../common/index'
 
 export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
-export type TypeInfoItem = { typeName: string; moduleName: ModuleName; typeInfo: TypeInfoBase; key?: string }
+export type TypeInfoItem = {
+  typeName: string
+  moduleName: ModuleName
+  typeInfo: TypeInfoBase
+  key?: string
+  fileName: string
+}
 
 export default class Components {
   // components!: OpenAPIV3.ComponentsObject
@@ -52,7 +59,7 @@ export default class Components {
     // return name
   }
 
-  pushTypeItem(typeInfo: TypeInfoBase, key?: string) {
+  pushTypeItem(typeInfo: TypeInfoBase, key?: string, fileName: string = commonTypeKey) {
     // if (key) {
     //   const item = this.typeInfoList.find(i => i.key === key)
     //   if (item) {
@@ -60,7 +67,7 @@ export default class Components {
     //   }
     // }
 
-    this.typeInfoList.push({ key, typeName: typeInfo.typeName, moduleName: typeInfo.moduleName, typeInfo })
+    this.typeInfoList.push({ key, typeName: typeInfo.typeName, fileName, moduleName: typeInfo.moduleName, typeInfo })
   }
 
   private createsObj() {
@@ -93,7 +100,7 @@ export default class Components {
 
   private createsPathType() {
     for (const pathItem of this.pathItems) {
-      const { item, apiPath, method, name, bodyName, paramsName, responseName } = pathItem
+      const { item, apiPath, method, name, bodyName, paramsName, responseName, moduleName } = pathItem
 
       const { parameters, responses, requestBody, operationId } = item
       const { description, content = {} } = (responses['200'] as ResponseObject) ?? {}
@@ -113,7 +120,7 @@ export default class Components {
           }
           const response = new Schemas(option)
           // console.log(response.typeName);
-          this.pushTypeItem(response, md5(apiPath + method + option.moduleName))
+          this.pushTypeItem(response, md5(apiPath + method + option.moduleName), moduleName)
           pathItem.responseType = response
         }
       }
@@ -121,14 +128,14 @@ export default class Components {
         // typeItems
         const option: ParametersOp = { parent: this, name: paramsName, datas: parameters, moduleName: 'parameters' }
         const parameter = new Parameters(option, pathItem)
-        this.pushTypeItem(parameter, md5(apiPath + method + option.moduleName))
+        this.pushTypeItem(parameter, md5(apiPath + method + option.moduleName), moduleName)
         pathItem.parameterType = parameter
       }
 
       if (requestBody) {
         const option: RequestBodiesOp = { parent: this, name: bodyName, data: requestBody, moduleName: 'requestBodies' }
         const requestBodies = new RequestBodies(option)
-        this.pushTypeItem(requestBodies, md5(apiPath + method + option.moduleName))
+        this.pushTypeItem(requestBodies, md5(apiPath + method + option.moduleName), moduleName)
         pathItem.requestBodyType = requestBodies
       }
     }

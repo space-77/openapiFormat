@@ -12,9 +12,8 @@ export type { LogInfo } from './store/index'
 export type { Dict } from './types/index'
 
 export * as dotsUtils from './common/utils'
+export { commonTypeKey, HttpMethods, httpMethods, httpMethodsReg } from './common/index'
 export * as Openapi from './types/openapi'
-
-export { httpMethods, httpMethodsReg } from './common/index'
 
 export default format
 

@@ -1,14 +1,14 @@
-import Components, { ModuleName } from '../components'
 import TypeInfoBase from './base'
+import Components, { ModuleName } from '../components'
 import type { SchemasData, SchemaObject, ReferenceObject } from '../../types/openapi'
 
 export type SchemasOp = {
-  parent: Components
   name: string
   data: SchemasData
-  resConentType?: string
-  moduleName: ModuleName
+  parent: Components
   isTsType?: boolean
+  moduleName: ModuleName
+  resConentType?: string
 }
 export default class Schemas extends TypeInfoBase {
   data: SchemasOp['data']
