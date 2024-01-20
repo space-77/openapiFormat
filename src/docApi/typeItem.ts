@@ -1,9 +1,12 @@
 import { OpenAPIV3 } from 'openapi-types'
-import ComponentsBase from './components/base'
+import TypeInfoBase from './components/base'
 
 export interface TypeItemOption {
   name: string
-  type?: string | ComponentsBase
+  /**
+   * @description 
+   */
+  type?: string | TypeInfoBase
   default?: string
   example?: string
   children?: TypeItem[]
@@ -17,7 +20,7 @@ export interface TypeItemOption {
   maxLength?: number
   format?: string
   externalDocs?: OpenAPIV3.ExternalDocumentationObject /** 外部链接描叙 */
-  ref?: { typeInfo: ComponentsBase; genericsItem?: ComponentsBase | string }
+  ref?: { typeInfo: TypeInfoBase; genericsItem?: TypeInfoBase | string }
 }
 export default class TypeItem {
   name!: string
@@ -37,7 +40,7 @@ export default class TypeItem {
   disable: boolean
   /** 泛型入参 */
   ref?: TypeItemOption['ref']
-  // genericsItem?: string | ComponentsBase | TypeItem /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
+  // genericsItem?: string | TypeInfoBase | TypeItem /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
   externalDocs?: TypeItemOption['externalDocs']
 
   constructor(option: TypeItemOption) {
@@ -74,6 +77,9 @@ export default class TypeItem {
     this.disable = false
   }
 
+  /**
+   * @description 获取键值的类型
+   */
   getKeyValue() {
     const { type, enumTypes = [], nullable, children = [], ref, format } = this
     const { typeInfo, genericsItem } = ref ?? {} // 泛型
@@ -88,7 +94,7 @@ export default class TypeItem {
       } else {
         content = type
       }
-    } else if (type instanceof ComponentsBase) {
+    } else if (type instanceof TypeInfoBase) {
       content = type.getRealBody().typeName
     } else if (!nullable) {
       content = 'any'

@@ -112,7 +112,7 @@ export default abstract class TypeInfoBase {
     if (type === 'file') return 'File'
     if (type === 'array') return 'Array'
     if (type === 'integer') return 'number'
-    if (type === 'object') return 'Record<string, any>'
+    // if (type === 'object') return 'Record<string, any>'
     return type
   }
 
@@ -256,7 +256,7 @@ export default abstract class TypeInfoBase {
       description,
       externalDocs,
       name: keyName,
-      enumTypes: _enum,
+      enumTypes: _enum, // FIXME 需要实现枚举类型
       type: this.getType(type, $ref)
     })
   }

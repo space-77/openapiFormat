@@ -1,6 +1,6 @@
 import Translate, { TranslateType } from '../common/translate'
 import Components from './components'
-import ComponentsBase from './components/base'
+import TypeInfoBase from './components/base'
 import type { OpenAPIV3 } from 'openapi-types'
 import { OperationObject } from '../types/openapi'
 import { HttpMethods, httpMethods } from '../common'
@@ -29,9 +29,9 @@ export interface PathItem {
   moduleName: string
   paramsName: string
   responseName: string
-  responseType?: ComponentsBase
-  parameterType?: ComponentsBase
-  requestBodyType?: ComponentsBase
+  responseType?: TypeInfoBase
+  parameterType?: TypeInfoBase
+  requestBodyType?: TypeInfoBase
 }
 
 export type FuncGroupList = {

@@ -13,11 +13,11 @@ import { commonTypeKey } from '../common/index'
 
 export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
 export type TypeInfoItem = {
-  typeName: string
-  moduleName: ModuleName
-  typeInfo: TypeInfoBase
   key?: string
   fileName: string
+  typeName: string
+  typeInfo: TypeInfoBase
+  moduleName: ModuleName
 }
 
 export default class Components {
