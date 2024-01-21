@@ -12,12 +12,36 @@ import type { Document, ResponseObject } from '../types/openapi'
 import { commonTypeKey } from '../common/index'
 
 export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
-export type TypeInfoItem = {
-  key?: string
-  fileName: string
-  typeName: string
-  typeInfo: TypeInfoBase
-  moduleName: ModuleName
+// export type TypeInfoItem = {
+//   // key?: string
+//   fileName: string
+//   typeName: string
+//   typeInfo: TypeInfoBase
+//   moduleName: ModuleName
+// }
+
+export type EnumType = {
+  name: string
+  values: string[]
+}
+
+export class TypeInfoItem {
+  constructor(
+    public fileName: string,
+    public typeName: string,
+    public typeInfo: TypeInfoBase,
+    public moduleName: ModuleName
+  ) {}
+
+  public get name() {
+    const { typeName, fileName } = this
+    return `${fileName}.${typeName}`
+  }
+
+  // getTypeName() {
+  //   const { fileName, typeName } = this
+  //   return ``
+  // }
 }
 
 export default class Components {
@@ -33,7 +57,8 @@ export default class Components {
   // examples: Record<string, TypeInfoBase> = {}
   // callbacks: Record<string, TypeInfoBase> = {}
   // securitySchemes: Record<string, TypeInfoBase> = {}
-  typeInfoList: TypeInfoItem[] = []
+  enumList: EnumType[] = []
+  typeInfoList: TypeInfoBase[] = []
 
   constructor(private baseDate: Document, private pathItems: PathItem[]) {
     // 先创建对象再处理数据， 方便打通类型之间的互相引用。
@@ -44,30 +69,18 @@ export default class Components {
 
   checkName(name: string): string {
     return checkName(name, checkName => this.typeInfoList.some(i => i.typeName === checkName))
-    // const hasName = this.typeInfoList.some(i => i.typeName === name)
-    // const lastNumReg = /((?!0)\d+)$/
-
-    // if (hasName) {
-    //   let newName = ''
-    //   if (!lastNumReg.test(name)) {
-    //     newName = `${name}1`
-    //   } else {
-    //     newName = name.replace(lastNumReg, $1 => `${Number($1) + 1}`)
-    //   }
-    //   return this.checkName(newName)
-    // }
-    // return name
   }
 
-  pushTypeItem(typeInfo: TypeInfoBase, key?: string, fileName: string = commonTypeKey) {
-    // if (key) {
-    //   const item = this.typeInfoList.find(i => i.key === key)
-    //   if (item) {
-    //     typeInfo.realBody = item.typeInfo
-    //   }
-    // }
+  pushEnum(name: string, enums: string[]) {
+    const item = this.enumList.find(i => i.name === name)
+    if (item && _.isEqual(enums, item.values)) return name
+    if (item) name = checkName(name, checkName => this.enumList.some(i => i.name === checkName))
+    this.enumList.push({ name, values: enums })
+    return name
+  }
 
-    this.typeInfoList.push({ key, typeName: typeInfo.typeName, fileName, moduleName: typeInfo.moduleName, typeInfo })
+  pushTypeItem(typeInfo: TypeInfoBase, fileName = commonTypeKey) {
+    this.typeInfoList.push(typeInfo)
   }
 
   private createsObj() {
@@ -100,7 +113,7 @@ export default class Components {
 
   private createsPathType() {
     for (const pathItem of this.pathItems) {
-      const { item, apiPath, method, name, bodyName, paramsName, responseName, moduleName } = pathItem
+      const { item, apiPath, method, name, bodyName, paramsName, responseName, moduleName: spaceName } = pathItem
 
       const { parameters, responses, requestBody, operationId } = item
       const { description, content = {} } = (responses['200'] as ResponseObject) ?? {}
@@ -115,27 +128,27 @@ export default class Components {
             parent: this,
             data: schema,
             name: responseName,
+            spaceName,
             moduleName: 'schemas',
             resConentType: media
           }
           const response = new Schemas(option)
-          // console.log(response.typeName);
-          this.pushTypeItem(response, md5(apiPath + method + option.moduleName), moduleName)
+          this.pushTypeItem(response)
           pathItem.responseType = response
         }
       }
       if (parameters) {
         // typeItems
-        const option: ParametersOp = { parent: this, name: paramsName, datas: parameters, moduleName: 'parameters' }
+        const option: ParametersOp = { parent: this, name: paramsName, datas: parameters, spaceName, moduleName: 'parameters' }
         const parameter = new Parameters(option, pathItem)
-        this.pushTypeItem(parameter, md5(apiPath + method + option.moduleName), moduleName)
+        this.pushTypeItem(parameter)
         pathItem.parameterType = parameter
       }
 
       if (requestBody) {
-        const option: RequestBodiesOp = { parent: this, name: bodyName, data: requestBody, moduleName: 'requestBodies' }
+        const option: RequestBodiesOp = { parent: this, name: bodyName, data: requestBody, spaceName, moduleName: 'requestBodies' }
         const requestBodies = new RequestBodies(option)
-        this.pushTypeItem(requestBodies, md5(apiPath + method + option.moduleName), moduleName)
+        this.pushTypeItem(requestBodies)
         pathItem.requestBodyType = requestBodies
       }
     }
@@ -143,11 +156,11 @@ export default class Components {
 
   private formatCode() {
     this.typeInfoList.forEach(i => {
-      i.typeInfo.init()
+      i.init()
     })
 
     // 类型初始化完后处理 allOf, anyOf, oneOf 相关逻辑
-    this.typeInfoList.forEach(({ typeInfo }) => {
+    this.typeInfoList.forEach(typeInfo => {
       const { allOf, anyOf, oneOf, typeItems } = typeInfo
 
       // allOf ,所有类型结合在一起
@@ -158,8 +171,15 @@ export default class Components {
     })
   }
 
-  addCustomType(name: string, types: CustomObject[] | string) {
+  createEnum(name: string, types: CustomObject[] | string) {
     const option: CustomOp = { parent: this, name, datas: types, moduleName: 'custom' }
+    const typeInfo = new Custom(option)
+    this.pushTypeItem(typeInfo)
+    return typeInfo
+  }
+
+  addCustomType(name: string, types: CustomObject[] | string, spaceName?: string) {
+    const option: CustomOp = { parent: this, name, datas: types, moduleName: 'custom', spaceName }
     const typeInfo = new Custom(option)
     this.pushTypeItem(typeInfo)
     return typeInfo

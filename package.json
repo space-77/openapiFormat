@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "ts-node ./src/dev.ts",
     "build": "tsc",
+    "test": "ts-node ./src/test.ts",
     "openapi": "ts-node ./src/openapi/index.ts"
   },
   "keywords": [

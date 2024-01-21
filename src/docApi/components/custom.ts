@@ -8,16 +8,17 @@ export type CustomOp = {
   parent: Components
   name: string
   datas: CustomObject[] | string
-  moduleName: ModuleName
   isTsType?: boolean
+  spaceName?: string
+  moduleName: ModuleName
 }
 export default class Custom extends TypeInfoBase {
   datas: CustomObject[] = []
   typeValue?: string
 
   constructor(op: CustomOp) {
-    const { parent, name, datas, moduleName, isTsType } = op
-    super(parent, name, moduleName, isTsType)
+    const { parent, name, datas, moduleName, isTsType, spaceName } = op
+    super(parent, name, moduleName, spaceName, isTsType)
     if (Array.isArray(datas)) {
       this.datas = datas
     } else {

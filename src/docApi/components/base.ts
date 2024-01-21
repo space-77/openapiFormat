@@ -14,9 +14,10 @@ import _ from 'lodash'
 import TypeItem from '../typeItem'
 import Schemas, { SchemasOp } from './schemas'
 import Components, { ModuleName } from '../components'
-import { firstToUpper, checkTsTypeKeyword } from '../../common/utils'
+import { firstToUpper, checkTsTypeKeyword, tsKeyword } from '../../common/utils'
 import { warnList } from '../../store'
 import { PathItem } from '../index'
+import { commonTypeKey } from '../../common'
 
 // FIXME 类型继承，可能会存在这种怪异类型
 // interface TypeName extends Array<number> {
@@ -52,8 +53,26 @@ export default abstract class TypeInfoBase {
     )
   }
 
-  constructor(protected parent: Components, public name: string, public moduleName: ModuleName, isTsType = false) {
-    this.typeName = isTsType ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
+  get isTsType() {
+    return tsKeyword.has(this.typeName)
+  }
+
+  constructor(
+    protected parent: Components,
+    public name: string,
+    public moduleName: ModuleName,
+    public groupName = commonTypeKey,
+    onlyName = false
+  ) {
+    this.typeName = onlyName ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
+  }
+
+  /**
+   * @description 所在命名空间的名称
+   */
+  public get spaceName() {
+    const { typeName, groupName, isTsType } = this
+    return isTsType ? typeName : `${groupName}.${typeName}`
   }
 
   /**
@@ -116,11 +135,10 @@ export default abstract class TypeInfoBase {
     return type
   }
 
-  protected findRefType(ref: string): TypeInfoBase | undefined {
+  protected findRefType(ref: string) {
     if (!ref.startsWith(baseRef)) return
     const [moduleName, typeName] = ref.replace(baseRef, '').split('/') as [keyof ComponentsObject, string]
-    const typeItem = this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.typeInfo.name === typeName)
-    return typeItem?.typeInfo
+    return this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.name === typeName)
   }
 
   protected pushRef(ref?: string, genericsItem?: TypeInfoBase) {
@@ -226,9 +244,9 @@ export default abstract class TypeInfoBase {
   }
 
   protected createSchemaType(keyName: string, schema: SchemasData, required?: boolean): TypeItem {
+    const { type } = schema as NonArraySchemaObject
     const { $ref } = schema as ReferenceObject
     const { items } = schema as ArraySchemaObject // 数组需要泛型入参
-    const { type } = schema as NonArraySchemaObject
 
     const {
       format,
@@ -245,6 +263,10 @@ export default abstract class TypeInfoBase {
     const children = Object.entries(properties).map(([name, schema]) =>
       this.createSchemaType(name, schema, childrenRequired.includes(name))
     )
+
+    let enumName
+    if (_enum.length > 0) enumName = this.parent.pushEnum(firstToUpper(keyName), _enum)
+
     return new TypeItem({
       ref: items ? this.createGenericsTypeinfo(items, keyName) : undefined,
       format,
@@ -257,7 +279,7 @@ export default abstract class TypeInfoBase {
       externalDocs,
       name: keyName,
       enumTypes: _enum, // FIXME 需要实现枚举类型
-      type: this.getType(type, $ref)
+      type: enumName ?? this.getType(type, $ref)
     })
   }
 

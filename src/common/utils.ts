@@ -126,7 +126,7 @@ export function checkName(name: string, checkFun: (name: string) => boolean): st
   return name
 }
 
-const tsKeyword = new Set([
+export const tsKeyword = new Set([
   'URL',
   'File',
   'Blob',

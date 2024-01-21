@@ -15,8 +15,9 @@ export type RequestBodiesOp = {
   parent: Components
   name: string
   data: BodyObject | ResponseData
-  moduleName: ModuleName
   isTsType?: boolean
+  spaceName?: string
+  moduleName: ModuleName
 }
 export default class RequestBodies extends TypeInfoBase {
   data: RequestBodiesOp['data']
@@ -26,8 +27,8 @@ export default class RequestBodies extends TypeInfoBase {
 
   // TODO BodyObject  的 required 是控制 body 的集合是否必传，但是 body 和 params 合并，应该没什么意义了。
   constructor(op: RequestBodiesOp) {
-    const { parent, name, data, moduleName, isTsType } = op
-    super(parent, name, moduleName, isTsType)
+    const { parent, name, data, moduleName, isTsType, spaceName } = op
+    super(parent, name, moduleName, spaceName, isTsType)
     this.data = data
   }
 

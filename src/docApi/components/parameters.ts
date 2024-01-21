@@ -10,16 +10,17 @@ export type ParametersOp = {
   parent: Components
   name: string
   datas: ParametersData[]
-  moduleName: ModuleName
   isTsType?: boolean
+  spaceName?: string
+  moduleName: ModuleName
 }
 export default class Parameters extends TypeInfoBase {
   datas: ParametersOp['datas']
   additionalProperties: any
 
   constructor(op: ParametersOp, public apiInfo?: PathItem) {
-    const { moduleName, parent, name, datas, isTsType } = op
-    super(parent, name, moduleName, isTsType)
+    const { moduleName, parent, name, datas, spaceName, isTsType } = op
+    super(parent, name, moduleName, spaceName, isTsType)
     this.datas = datas
   }
 

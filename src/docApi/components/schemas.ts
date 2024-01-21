@@ -7,6 +7,7 @@ export type SchemasOp = {
   data: SchemasData
   parent: Components
   isTsType?: boolean
+  spaceName?: string
   moduleName: ModuleName
   resConentType?: string
 }
@@ -15,8 +16,8 @@ export default class Schemas extends TypeInfoBase {
   resConentType?: string
 
   constructor(op: SchemasOp) {
-    const { parent, name, data, resConentType, moduleName, isTsType } = op
-    super(parent, name, moduleName, isTsType)
+    const { parent, name, data, resConentType, moduleName, isTsType, spaceName } = op
+    super(parent, name, moduleName, spaceName, isTsType)
     this.data = data
     this.resConentType = resConentType
   }

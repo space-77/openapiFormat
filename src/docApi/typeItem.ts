@@ -4,7 +4,7 @@ import TypeInfoBase from './components/base'
 export interface TypeItemOption {
   name: string
   /**
-   * @description 
+   * @description
    */
   type?: string | TypeInfoBase
   default?: string
@@ -30,7 +30,7 @@ export default class TypeItem {
   required?: boolean
   nullable?: boolean /** 可以为空 */
   children?: TypeItem[]
-  enumTypes?: any[]
+  enumTypes?: (string | number)[]
   paramType?: TypeItemOption['paramType']
   deprecated?: boolean /** 是否弃用 */
   description?: string
@@ -81,13 +81,11 @@ export default class TypeItem {
    * @description 获取键值的类型
    */
   getKeyValue() {
-    const { type, enumTypes = [], nullable, children = [], ref, format } = this
+    const { type, nullable, children = [], ref, format } = this
     const { typeInfo, genericsItem } = ref ?? {} // 泛型
 
     let content = ''
-    if (enumTypes.length > 0) {
-      content = enumTypes.map(i => `"${i}"`).join(' | ')
-    } else if (typeof type === 'string') {
+    if (typeof type === 'string') {
       if (format === 'binary') {
         // 使用文件 类型
         content = 'File'
@@ -102,8 +100,8 @@ export default class TypeItem {
 
     if (typeInfo) {
       // 生成泛型
-      content = typeInfo.typeName
-      let typeNameT = typeof genericsItem === 'string' ? genericsItem : genericsItem?.typeName
+      content = typeInfo.spaceName
+      let typeNameT = typeof genericsItem === 'string' ? genericsItem : genericsItem?.spaceName
       if (typeNameT === 'Array') typeNameT = 'Array<any>'
       content += `<${typeNameT ?? 'any'}>`
     } else if (content === 'Array') content = 'Array<any>'
@@ -116,14 +114,15 @@ export default class TypeItem {
     return `${content}${nullable ? `${content ? '|' : ''}null` : ''}`
   }
 
-  getTypeValue(): string {
-    const { name, required } = this
+  getTypeValue(enumPre?: string): string {
+    const { name, required, enumTypes = [] } = this
 
     let key = name.replace(/-/g, '_')
     if (/\./.test(key)) key = `'${key}'`
 
     const desc = this.getDesc()
-    const typeValue = this.getKeyValue()
+    let typeValue = this.getKeyValue()
+    if (enumTypes.length > 0) typeValue = enumPre + typeValue
 
     return `${desc}${key}${required ? '' : '?'}:${typeValue}\n`
   }
