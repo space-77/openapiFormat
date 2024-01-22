@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import md5 from 'md5'
 import { PathItem } from './index'
 import Schemas, { SchemasOp } from './components/schemas'
 import Responses from './components/Responses'

@@ -169,7 +169,7 @@ export default class DocApi {
       const pathItems = funs.map(funInfo => {
         const { item, method, apiPath } = funInfo
         let name = this.createFunName(apiPath, samePath, method, item.operationId)
-        name = name.replace(new RegExp(`^${sameName}`), '')
+        if (name !== sameName) name = name.replace(new RegExp(`^${sameName}`), '')
         if (names.has(name)) name += _.upperFirst(method)
         name = checkName(name, checkName => names.has(checkName))
         name = fixStartNum(name)
@@ -193,7 +193,7 @@ export default class DocApi {
   }
 
   private createFunName(apiPath: string, samePath: string, method: string, operationId?: string) {
-    // GetReportRepairInfo1
+    // SyncUsingGET
     if (operationId) {
       //  整理 operationId 作为方法名
       return operationId.replace(/(.+)(Using.+)/, '$1')
@@ -202,9 +202,5 @@ export default class DocApi {
       // 整理 url 作为方法名
       return getIdentifierFromUrl(apiPath, method, samePath)
     }
-
-    // // TODO 如果转非 js 语言的代码，可能兼用该语言的关键字
-    // if (isKeyword(name)) name = `${name}Func`
-    // return name
   }
 }

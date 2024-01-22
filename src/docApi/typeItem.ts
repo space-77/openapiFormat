@@ -7,6 +7,7 @@ export interface TypeItemOption {
    * @description
    */
   type?: string | TypeInfoBase
+  typeRef?: TypeInfoBase 
   default?: string
   example?: string
   children?: TypeItem[]
@@ -25,6 +26,7 @@ export interface TypeItemOption {
 export default class TypeItem {
   name!: string
   type?: TypeItemOption['type']
+  typeRef?: TypeInfoBase
   example?: string
   default?: string
   required?: boolean
@@ -44,7 +46,7 @@ export default class TypeItem {
   externalDocs?: TypeItemOption['externalDocs']
 
   constructor(option: TypeItemOption) {
-    const { name, type, example, default: def, required } = option
+    const { name, type, typeRef, example, default: def, required } = option
     const {
       ref,
       format,
@@ -61,6 +63,7 @@ export default class TypeItem {
     this.ref = ref
     this.name = name
     this.type = type
+    this.typeRef = typeRef
     this.format = format
     this.default = def
     this.example = example

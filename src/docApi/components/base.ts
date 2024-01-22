@@ -45,7 +45,7 @@ export default abstract class TypeInfoBase {
   externalDocs?: ExternalDocumentationObject
   resConentType?: string
 
-  get isEmpty(): boolean {
+  public get isEmpty(): boolean {
     const { typeItems, refs } = this
     return (
       refs.every(i => i.typeInfo.isEmpty && i.typeInfo?.typeName !== 'Array') &&
@@ -53,8 +53,16 @@ export default abstract class TypeInfoBase {
     )
   }
 
-  get isTsType() {
+  public get isTsType() {
     return tsKeyword.has(this.typeName)
+  }
+
+  /**
+   * @description 所在命名空间的名称
+   */
+  public get spaceName() {
+    const { typeName, groupName, isTsType } = this
+    return isTsType ? typeName : `${groupName}.${typeName}`
   }
 
   constructor(
@@ -65,14 +73,6 @@ export default abstract class TypeInfoBase {
     onlyName = false
   ) {
     this.typeName = onlyName ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
-  }
-
-  /**
-   * @description 所在命名空间的名称
-   */
-  public get spaceName() {
-    const { typeName, groupName, isTsType } = this
-    return isTsType ? typeName : `${groupName}.${typeName}`
   }
 
   /**
@@ -135,8 +135,8 @@ export default abstract class TypeInfoBase {
     return type
   }
 
-  protected findRefType(ref: string) {
-    if (!ref.startsWith(baseRef)) return
+  protected findRefType(ref?: string) {
+    if (!ref || !ref.startsWith(baseRef)) return
     const [moduleName, typeName] = ref.replace(baseRef, '').split('/') as [keyof ComponentsObject, string]
     return this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.name === typeName)
   }
@@ -270,6 +270,7 @@ export default abstract class TypeInfoBase {
     return new TypeItem({
       ref: items ? this.createGenericsTypeinfo(items, keyName) : undefined,
       format,
+      typeRef: this.findRefType($ref),
       example,
       nullable,
       children,
