@@ -72,7 +72,9 @@ export default abstract class TypeInfoBase {
     public groupName = commonTypeKey,
     onlyName = false
   ) {
-    this.typeName = onlyName ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
+    // FIXME 考虑是否需要 排除原生类型
+    // this.typeName = onlyName ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
+    this.typeName = onlyName ? name : parent.checkName(firstToUpper(name))
   }
 
   /**
@@ -277,7 +279,7 @@ export default abstract class TypeInfoBase {
       required,
       deprecated,
       description,
-      externalDocs,
+      externalDocs, 
       name: keyName,
       enumTypes: _enum, // FIXME 需要实现枚举类型
       type: enumName ?? this.getType(type, $ref)

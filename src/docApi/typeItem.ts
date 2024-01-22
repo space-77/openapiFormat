@@ -7,7 +7,7 @@ export interface TypeItemOption {
    * @description
    */
   type?: string | TypeInfoBase
-  typeRef?: TypeInfoBase 
+  typeRef?: TypeInfoBase
   default?: string
   example?: string
   children?: TypeItem[]
@@ -96,7 +96,19 @@ export default class TypeItem {
         content = type
       }
     } else if (type instanceof TypeInfoBase) {
-      content = type.getRealBody().typeName
+      // FIXME 返回 应该是 string 不是 Date
+      /**
+       *           
+       * {
+          "name": "date",
+          "in": "query",
+          "description": "2023-09-20",
+          "required": false,
+          "type": "string",
+          "format": "date"
+        },
+       */
+      content = type.getRealBody().spaceName
     } else if (!nullable) {
       content = 'any'
     }
@@ -117,7 +129,7 @@ export default class TypeItem {
     return `${content}${nullable ? `${content ? '|' : ''}null` : ''}`
   }
 
-  getTypeValue(enumPre?: string): string {
+  getTypeValue(enumPre = ''): string {
     const { name, required, enumTypes = [] } = this
 
     let key = name.replace(/-/g, '_')
