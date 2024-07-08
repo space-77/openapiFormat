@@ -57,14 +57,6 @@ export default abstract class TypeInfoBase {
     return tsKeyword.has(this.typeName)
   }
 
-  /**
-   * @description 所在命名空间的名称
-   */
-  public get spaceName() {
-    const { typeName, groupName, isTsType } = this
-    return isTsType ? typeName : `${groupName}.${typeName}`
-  }
-
   constructor(
     protected parent: Components,
     public name: string,
@@ -76,6 +68,15 @@ export default abstract class TypeInfoBase {
     // this.typeName = onlyName ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
     this.typeName = onlyName ? name : parent.checkName(firstToUpper(name))
   }
+
+    /**
+   * @description 所在命名空间的名称
+   */
+    spaceName(spaceName?: string) {
+      const { typeName, groupName, isTsType } = this
+      if (spaceName === this.groupName) return typeName
+      return isTsType ? typeName : `${groupName}.${typeName}`
+    }
 
   /**
    * @desc 获取真实类型，跳过空类型引用
@@ -279,7 +280,7 @@ export default abstract class TypeInfoBase {
       required,
       deprecated,
       description,
-      externalDocs, 
+      externalDocs,
       name: keyName,
       enumTypes: _enum, // FIXME 需要实现枚举类型
       type: enumName ?? this.getType(type, $ref)
