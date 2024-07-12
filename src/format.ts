@@ -186,7 +186,7 @@ function formatV3Name(data: any) {
     name = checkName(name, n => refPreData[n] !== undefined)
     const refData = refPreData[refName]
     if (refData) {
-      refPreData[name] = data
+      refPreData[name] = refData
       delete refPreData[refName]
     } else throw new Error(`数据异常 ${ref} 引用数据不存在`)
 
