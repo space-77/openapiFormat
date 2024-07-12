@@ -61,21 +61,21 @@ export default abstract class TypeInfoBase {
     protected parent: Components,
     public name: string,
     public moduleName: ModuleName,
-    public groupName = commonTypeKey,
+    public spaceName = commonTypeKey,
     onlyName = false
   ) {
     // FIXME 考虑是否需要 排除原生类型
     // this.typeName = onlyName ? name : parent.checkName(checkTsTypeKeyword(firstToUpper(name)))
-    this.typeName = onlyName ? name : parent.checkName(firstToUpper(name))
+    this.typeName = onlyName ? name : parent.checkName(firstToUpper(name), spaceName)
   }
 
     /**
    * @description 所在命名空间的名称
    */
-    spaceName(spaceName?: string) {
-      const { typeName, groupName, isTsType } = this
-      if (spaceName === this.groupName) return typeName
-      return isTsType ? typeName : `${groupName}.${typeName}`
+    getSpaceName(spaceName?: string) {
+      const { typeName, isTsType } = this
+      if (spaceName === this.spaceName) return typeName
+      return isTsType ? typeName : `${this.spaceName}.${typeName}`
     }
 
   /**
@@ -141,7 +141,7 @@ export default abstract class TypeInfoBase {
   protected findRefType(ref?: string) {
     if (!ref || !ref.startsWith(baseRef)) return
     const [moduleName, typeName] = ref.replace(baseRef, '').split('/') as [keyof ComponentsObject, string]
-    return this.parent.typeInfoList.find(i => i.moduleName === moduleName && i.name === typeName)
+    return this.parent.findTypeInfo(i => i.moduleName === moduleName && i.name === typeName)
   }
 
   protected pushRef(ref?: string, genericsItem?: TypeInfoBase) {

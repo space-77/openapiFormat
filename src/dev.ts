@@ -44,7 +44,7 @@ const dictPath = path.join(__dirname, '../mock/dict.json')
 ~(async () => {
   try {
     const dict = require(dictPath) ?? []
-    const res = await docInit(url, dict, { translateType: TranslateType.none })
+    const res = await docInit(url, dict, { translateType: TranslateType.english })
     fs.writeFileSync(dictPath, JSON.stringify(res.dictList, null, 2))
     fs.writeFileSync(path.join(__dirname, '../mock/无翻译2.json'), JSON.stringify(res.docApi.json, null, 2))
   } catch (error) {

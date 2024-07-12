@@ -1,6 +1,6 @@
 {
   "name": "doc-pre-data",
-  "version": "1.1.19-beta.1",
+  "version": "1.1.19-beta.2",
   "description": "整理openapi数据",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -32,7 +32,7 @@
     "is-word-character": "^1.0.4",
     "jsonrepair": "^3.0.2",
     "lodash": "*",
-    "node-translates": "^1.3.3",
+    "node-translates": "^1.4.1",
     "openapi": "^1.0.1",
     "openapi-types": "^12.0.2",
     "pinyin-pro": "^3.13.1"

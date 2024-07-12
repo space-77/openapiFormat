@@ -972,10 +972,10 @@ node-readfiles@^0.2.0:
   dependencies:
     es6-promise "^3.2.1"
 
-node-translates@^1.3.3:
-  version "1.3.3"
-  resolved "https://registry.npmjs.org/node-translates/-/node-translates-1.3.3.tgz#311a68f038bbb03385342073726c3ea26b5912e9"
-  integrity sha512-oqQHHVuJZRcf2W4WNQrej9SdT8REp3Fbsnn0/XPiWlwzZQZwOei+1PryAtJooLxjtNmtjq+nu33woRytYymSWw==
+node-translates@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.npmjs.org/node-translates/-/node-translates-1.4.0.tgz#d9211871a34f9344bc34665b9e8c73cb8cb1831a"
+  integrity sha512-uSrD5fqcqY3oRbyiB9N/US9JzjCoVMg4WI2UfpqMoyNFlo8TEX3V4xEgKxA24X5b70apIH7Le7eYzRrIvsBowA==
   dependencies:
     axios "*"
     cheerio "1.0.0-rc.12"

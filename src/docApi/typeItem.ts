@@ -108,15 +108,15 @@ export default class TypeItem {
           "format": "date"
         },
        */
-      content = type.getRealBody().spaceName()
+      content = type.getRealBody().getSpaceName()
     } else if (!nullable) {
       content = 'any'
     }
 
     if (typeInfo) {
       // 生成泛型
-      content = typeInfo.spaceName()
-      let typeNameT = typeof genericsItem === 'string' ? genericsItem : genericsItem?.spaceName()
+      content = typeInfo.getSpaceName()
+      let typeNameT = typeof genericsItem === 'string' ? genericsItem : genericsItem?.getSpaceName()
       if (typeNameT === 'Array') typeNameT = 'Array<any>'
       content += `<${typeNameT ?? 'any'}>`
     } else if (content === 'Array') content = 'Array<any>'
