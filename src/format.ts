@@ -1,6 +1,8 @@
 import _ from 'lodash'
 import axios from 'axios'
 import DocApi from './docApi'
+import traverse from 'traverse'
+import isKeyword from 'is-ecma-keyword'
 import converter from 'do-swagger2openapi'
 import { jsonrepair } from 'jsonrepair'
 import type { OpenAPIV3 } from 'openapi-types'
@@ -9,8 +11,6 @@ import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
 import Translate, { DictList, TranslateType } from './common/translate'
 import type { Dict } from './types/index'
 
-const isKeyword = require('is-es2016-keyword')
-const deepForEach = require('deep-for-each')
 
 const tagType = 'tag'
 const fixNames = ['Interface', 'module']
@@ -98,7 +98,11 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
   const t = new Translate(dictList, translateType)
   const textList: TextList[] = []
 
-  deepForEach(data, async (value: any, key: string, subject: any) => {
+  traverse(data).forEach(async function (value) {
+    const { key, parent, isRoot } = this
+    if (isRoot) return
+    const subject = parent?.node
+
     if (key === '$ref' && typeof value === 'string') {
       const [, , typeInfoKey, refNname] = value.split('/')
       let textEn = ''
@@ -164,7 +168,12 @@ async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], trans
 
 function formatV3Name(data: any) {
   const refs: RevertChineseRef[] = []
-  deepForEach(data, (value: any, key: string, subject: any) => {
+
+  traverse(data).forEach(function (value) {
+    const { key, parent, isRoot } = this
+    if (!isRoot) return
+    const subject = parent?.node
+
     if (key === '$ref') {
       // #/components/schemas/TongYongXiangYingTi_List_YueDuLingShouJi
       const [, , , refName] = (value as string).split('/')
@@ -205,7 +214,10 @@ function formatOpenapi3Name(json: any) {
   const { components } = json
   if (!components) return
 
-  deepForEach(json, (value: any, key: string, subject: any) => {
+  traverse(json).forEach(function (value) {
+    const { key, parent, isRoot } = this
+    if (isRoot) return
+    const subject = parent?.node
     if (key === '$ref') {
       // #/components/schemas/TongYongXiangYingTi_List_YueDuLingShouJi
       // 先收集后统一处理
@@ -348,7 +360,7 @@ function restoreCache({ json }: ApiData, cache: Dict['cache']) {
 
           // 还原旧信息
           info.operationId = cacheId
-          
+
           const oldInfo = idMap.get(cacheId)
           if (oldInfo) {
             // 旧id是否被使用

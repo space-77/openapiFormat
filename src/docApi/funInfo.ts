@@ -3,8 +3,6 @@ import type { HttpMethods } from '../common/index'
 import { getIdentifierFromUrl } from '../common/utils'
 import type { OperationObject } from '../types/openapi'
 
-// const isChinese = require('is-chinese')
-// const isKeyword = require('is-es2016-keyword')
 
 export default class FunInfo {
   funName!: string

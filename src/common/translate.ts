@@ -2,8 +2,6 @@ import _ from 'lodash'
 import { iflyrecTranslator, baiduTranslator, bingTranslator, Languages } from 'node-translates'
 import { pinyin } from 'pinyin-pro'
 import { fixStartNum, isChinese, isWord } from './utils'
-// import { isWordCharacter } from 'is-word-character'
-// const isChinese = require('is-chinese')
 
 export type DictList = { zh: string; en: string | null; form?: '讯飞' | '百度' | '微软' }
 export type WaitTranslate = {

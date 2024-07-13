@@ -1,6 +1,6 @@
 {
   "name": "doc-pre-data",
-  "version": "1.1.19-beta.2",
+  "version": "1.1.19-beta.3",
   "description": "整理openapi数据",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -25,21 +25,22 @@
   "license": "MIT",
   "dependencies": {
     "axios": "*",
-    "deep-for-each": "^3.0.0",
     "do-swagger2openapi": "^7.0.18",
     "is-chinese": "^2.0.0",
+    "is-ecma-keyword": "^1.0.3",
     "is-es2016-keyword": "^1.0.0",
-    "is-word-character": "^1.0.4",
     "jsonrepair": "^3.0.2",
     "lodash": "*",
     "node-translates": "^1.4.1",
     "openapi": "^1.0.1",
     "openapi-types": "^12.0.2",
-    "pinyin-pro": "^3.13.1"
+    "pinyin-pro": "^3.13.1",
+    "traverse": "^0.6.9"
   },
   "devDependencies": {
     "@types/lodash": "*",
     "@types/node": "^18.11.3",
+    "@types/traverse": "^0.6.37",
     "ts-node": "^10.9.1",
     "typescript": "^4.8.4"
   },

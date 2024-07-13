@@ -16,8 +16,6 @@ import {
 } from '../common/utils'
 import _ from 'lodash'
 
-// const isChinese = require('is-chinese')
-
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
 export interface PathItem {

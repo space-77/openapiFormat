@@ -1,9 +1,5 @@
 import _ from 'lodash'
 import checkChinese from 'is-chinese'
-// import isWordCharacter from 'is-word-character'
-// import balanced from 'balanced-match'
-const isWordCharacter = require('is-word-character')
-// const isChinese = require('is-chinese')
 
 /**
  * @param str
@@ -84,6 +80,10 @@ export function getIdentifierFromUrl(url: string, requestType: string, samePath 
       })
       .join('')
   )
+}
+
+export function isWordCharacter(character: string | number) {
+  return /\w/.test(typeof character === 'number' ? String.fromCharCode(character) : character.charAt(0))
 }
 
 // export function formatRefTag(ref: string) {
