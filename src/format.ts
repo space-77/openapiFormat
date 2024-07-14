@@ -11,7 +11,6 @@ import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
 import Translate, { DictList, TranslateType } from './common/translate'
 import type { Dict } from './types/index'
 
-
 const tagType = 'tag'
 const fixNames = ['Interface', 'module']
 
@@ -171,7 +170,7 @@ function formatV3Name(data: any) {
 
   traverse(data).forEach(function (value) {
     const { key, parent, isRoot } = this
-    if (!isRoot) return
+    if (isRoot) return
     const subject = parent?.node
 
     if (key === '$ref') {
@@ -308,7 +307,7 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
         formatOpenapi3Name(data)
       }
 
-      if (/^3\.\d+\.\d+$/.test(data.openapi)) {
+      if (/^3\.\d+\.\d+$/.test(data.openapi ?? data.swagger)) {
         if (!isSwagger) formatV3Name(data)
         const { dictList: newDictList } = await translateV3(data, dictList, translateType)
         resolve({ json: data, dictList: newDictList })
