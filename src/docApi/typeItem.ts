@@ -1,3 +1,5 @@
+import _ from 'lodash'
+import { isWord } from '../common/utils'
 import { OpenAPIV3 } from 'openapi-types'
 import TypeInfoBase from './components/base'
 
@@ -132,7 +134,10 @@ export default class TypeItem {
   getTypeValue(enumPre = ''): string {
     const { name, required, enumTypes = [] } = this
 
-    let key = name.replace(/-/g, '_')
+    let key = name
+      .split('')
+      .map(i => (isWord(i) ? i : '_'))
+      .join('')
     if (/\./.test(key)) key = `'${key}'`
 
     const desc = this.getDesc()

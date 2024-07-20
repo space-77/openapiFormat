@@ -321,59 +321,34 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
   })
 }
 
-function getAllOperationId(paths: OpenAPIV3.PathsObject<{}, {}>) {
-  // const { paths } = json
-  const idMap = new Map<string, { method: string; apiPath: string; info: OpenAPIV3.OperationObject }>()
-  Object.entries(paths).forEach(([apiPath, value]) => {
-    if (!value) return
-    Object.entries(value).forEach(([method, info]) => {
-      if (typeof info === 'object' && !Array.isArray(info) && info.operationId) {
-        idMap.set(info.operationId, { method, apiPath, info })
-      }
-    })
-  })
-
-  return idMap
-}
-
 function restoreCache({ json }: ApiData, cache: Dict['cache']) {
   if (!cache) return
+  const { idNames = {} } = cache ?? {}
+
+  function findMethod<T = any>(info: T, id: string) {
+    return _.isObject(info) && !_.isArray(info) && (info as any).operationId === id
+  }
+
   const { paths } = json
-
-  const idMap = getAllOperationId(paths)
-
   Object.entries(paths).forEach(([apiPath, methodsObj]) => {
     if (!methodsObj) return
-    Object.entries(methodsObj).forEach(([method, info]) => {
-      if (!info) return
-      const { idNames } = cache
+    const apiList = Object.entries(methodsObj)
+    apiList.forEach(([method, info]) => {
+      if (!info || !(typeof info === 'object' && !Array.isArray(info))) return
+      const { operationId } = info
+      if (!operationId) return
+
       const cacheKey = `${method}_${apiPath}`
-      if (typeof info === 'object' && !Array.isArray(info)) {
-        if (cacheKey in cache) {
-          // cache 存在对应数据
-          const id = info.operationId
-          if (!id) return
+      const oldId = idNames[cacheKey]
 
-          let cacheId = idNames[cacheKey]
-          if (cacheId === id) return
-
-          // 还原旧信息
-          info.operationId = cacheId
-
-          const oldInfo = idMap.get(cacheId)
-          if (oldInfo) {
-            // 旧id是否被使用
-            const { method, apiPath, info: newMetInfo } = oldInfo
-            const newId = checkName(cacheId, n => !!idMap.get(n))
-            newMetInfo.operationId = newId
-            idMap.set(newId, oldInfo) // 修改和原id相同的信息
-            idNames[`${method}_${apiPath}`] = newId
-          }
-          idMap.set(cacheId, { method, apiPath, info }) // 修改 原id信息
-        } else if (info.operationId) {
-          // cache 不存在对应数据
-          idNames[cacheKey] = info.operationId
+      if (oldId && oldId !== operationId) {
+        const [, oldInfo] = apiList.find(([, info]) => findMethod(info, oldId)) ?? []
+        if (oldInfo && _.isObject(oldInfo) && !_.isArray(oldInfo)) {
+          oldInfo.operationId = checkName(`${oldId}1`, n => !!apiList.find(([, info]) => findMethod(info, n)))
         }
+        info.operationId = oldId
+      } else {
+        idNames[cacheKey] = operationId
       }
     })
   })
