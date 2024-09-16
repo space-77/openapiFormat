@@ -53,7 +53,7 @@ export default class DocApi {
 
   private pathItems: PathItem[] = []
   typeGroup!: Components
-  constructor(public json: OpenAPIV3.Document) {}
+  constructor(public json: OpenAPIV3.Document, private useOperationId = true) {}
 
   async init() {
     // 1、翻译
@@ -191,8 +191,9 @@ export default class DocApi {
   }
 
   private createFunName(apiPath: string, samePath: string, method: string, operationId?: string) {
+    const { useOperationId } = this
     // SyncUsingGET
-    if (operationId) {
+    if (operationId && useOperationId) {
       //  整理 operationId 作为方法名
       return operationId.replace(/(.+)(Using.+)/, '$1')
       // name = operationId.replace(/_/, '')

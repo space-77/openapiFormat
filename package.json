@@ -1,6 +1,6 @@
 {
   "name": "doc-pre-data",
-  "version": "1.1.19-beta.5",
+  "version": "1.1.20",
   "description": "整理openapi数据",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -25,7 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "*",
-    "do-swagger2openapi": "^7.0.18",
+    "do-swagger2openapi": "^7.0.20",
     "is-chinese": "^2.0.0",
     "is-ecma-keyword": "^1.0.3",
     "jsonrepair": "^3.8.0",

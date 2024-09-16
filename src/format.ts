@@ -354,9 +354,9 @@ function restoreCache({ json }: ApiData, cache: Dict['cache']) {
   })
 }
 
-type Options = { translateType?: TranslateType }
+type Options = { translateType?: TranslateType, useOperationId?: boolean }
 export default async function (url: string | object, dict?: Dict, options?: Options) {
-  const { translateType } = options ?? {}
+  const { translateType, useOperationId } = options ?? {}
   const { dict: dictList = [] } = dict ?? {}
   try {
     const res = await getApiData(url, dictList, translateType)
@@ -366,7 +366,7 @@ export default async function (url: string | object, dict?: Dict, options?: Opti
       restoreCache(res, dict.cache)
     }
 
-    const docApi = new DocApi(res.json)
+    const docApi = new DocApi(res.json, useOperationId)
     await docApi.init()
     return { docApi, dictList: res.dictList, warnList, errorList, cache: dict!.cache }
   } catch (error) {

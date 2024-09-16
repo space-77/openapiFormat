@@ -406,10 +406,10 @@ do-oas-kit-common@^1.0.10:
     is-chinese "^2.0.0"
     is-word-character "^1.0.4"
 
-do-swagger2openapi@^7.0.18:
-  version "7.0.18"
-  resolved "https://mirrors.cloud.tencent.com/npm/do-swagger2openapi/-/do-swagger2openapi-7.0.18.tgz#30cc0fad22d4b543d668f3b3e84349d1cb93113a"
-  integrity sha512-rPDue4SCSsPGLrgJHw7zBG5KxhEYeeCahqm96/lqu1t01moYlyP9Z8ZKpZpE5WFCsAwQ/LNJhPF6Xk5HIQ2+ZQ==
+do-swagger2openapi@^7.0.20:
+  version "7.0.20"
+  resolved "https://registry.npmjs.org/do-swagger2openapi/-/do-swagger2openapi-7.0.20.tgz#ad9f6eff5b659bcc93f7aee31e823195666ba968"
+  integrity sha512-MJRZRpM9uNLFxT73kuohXhYFRHdxz2EqI4OtXbpSKi9PI0HHD++9aOXwnUOlOgbL+hf5dfr6vGTiS0lfbkH+rQ==
   dependencies:
     call-me-maybe "^1.0.1"
     deep-for-each "^3.0.0"

@@ -31,7 +31,7 @@ import docInit from './index'
 // const url = 'https://omtest.gtcloud.cn/v2/api-docs'
 // const url = 'http://tlfete.cfldcn.com:8088/v2/api-docs'
 // const url = 'https://omtest.gtcloud.cn/v2/api-docs'
-const url = 'http://175.178.60.159:81/house-admin/v3/api-docs'
+// const url = 'http://175.178.60.159:81/house-admin/v3/api-docs'
 // const url = 'http://124.70.8.166/manage/v2/api-docs'
 // const url = 'http://tlfete.cfldcn.com:9100/v2/api-docs'
 // const url = 'http://114.115.202.183:8088/v2/api-docs'
@@ -39,13 +39,13 @@ const url = 'http://175.178.60.159:81/house-admin/v3/api-docs'
 // const url = 'https://generator3.swagger.io/openapi.json'
 // const url = 'https://mock.mengxuegu.com/mock/6384cdec9433403d6c06894e/openapi3/mock'
 
-// const json = require(path.join(__dirname, '../mock/api.json'))
+const json = require(path.join(__dirname, '../mock/dx.json'))
 // // const openapi = new OpenApi(url)
 const dictPath = path.join(__dirname, '../mock/dict.json')
 ~(async () => {
   try {
     const dict = require(dictPath) ?? []
-    const res = await docInit(url, dict, { translateType: TranslateType.none })
+    const res = await docInit(json, dict, { translateType: TranslateType.none })
     fs.writeFileSync(dictPath, JSON.stringify(res.dictList, null, 2))
     fs.writeFileSync(path.join(__dirname, '../mock/无翻译2.json'), JSON.stringify(res.docApi.json, null, 2))
   } catch (error) {
