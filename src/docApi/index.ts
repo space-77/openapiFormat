@@ -119,14 +119,18 @@ export default class DocApi {
           const moduleItem = moduleList.find(i => i.tag === tag)
           if (!moduleItem) {
             const tagInfo = tagList.find(i => i.name === tag) ?? {
-              name: 'index',
-              description: notTagDes
+              name: flip ? notTagDes : tag ?? 'index',
+              description: flip ? tag ?? 'index' : notTagDes
             }
 
-            if (flip && tagInfo.description !== notTagDes) {
-              const { description = 'index' } = tagInfo
-              tagInfo.description = tagInfo.name
-              tagInfo.name = description
+            if (flip) {
+              if (tagInfo.description) {
+                const { description } = tagInfo
+                tagInfo.description = tagInfo.name
+                tagInfo.name = description
+              } else {
+                tagInfo.description = tagInfo.name
+              }
             }
 
             let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name), TranslateType.english)
