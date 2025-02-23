@@ -72,14 +72,35 @@ export default class DocApi {
 
   private funcGroup() {
     const { json } = this
-    const { tags: tagList = [], paths } = json
+    const { tags: _tagList = [], paths } = json
+
+    const funData = Object.entries(paths)
+
+    let tagList: OpenAPIV3.TagObject[] = []
+    if (Array.isArray(_tagList) && _tagList.length > 0) {
+      tagList = _tagList
+    } else {
+      funData.forEach(([_, pathsObject]) => {
+        if (!pathsObject) return
+        for (const method of httpMethods) {
+          const item = pathsObject[method] as OperationObject | undefined
+          if (!item) continue
+          const { tags = [] } = item
+          tags.forEach(tag => {
+            if (!tagList.find(i => i.name === tag)) {
+              tagList.push({ name: tag, description: 'Method without tag' })
+            }
+          })
+        }
+      })
+    }
+    // const tagList = !Array.isArray(_tagList) || _tagList.length === 0 ? _tagList : []
 
     // 兼容某些项目把swagger tag的name和description弄反的情况
     // 当检测到name包含中文的时候，采用description
     const flip = tagList.map(i => i.name).some(i => i.split('').some(isChinese))
 
     const moduleList: FuncGroup[] = []
-    const funData = Object.entries(paths)
 
     const notTagDes = 'Method without tag'
 
@@ -96,14 +117,18 @@ export default class DocApi {
           const moduleItem = moduleList.find(i => i.tag === tag)
           if (!moduleItem) {
             const tagInfo = tagList.find(i => i.name === tag) ?? {
-              name: 'index',
-              description: notTagDes
+              name: flip ? notTagDes : tag ?? 'index',
+              description: flip ? tag ?? 'index' : notTagDes
             }
 
-            if (flip && tagInfo.description !== notTagDes) {
-              const { description = 'index' } = tagInfo
-              tagInfo.description = tagInfo.name
-              tagInfo.name = description
+            if (flip) {
+              if (tagInfo.description) {
+                const { description } = tagInfo
+                tagInfo.description = tagInfo.name
+                tagInfo.name = description
+              } else {
+                tagInfo.description = tagInfo.name
+              }
             }
 
             let moduleName = Translate.startCaseClassName(transformCamelCase(tagInfo.name), TranslateType.english)
@@ -195,11 +220,15 @@ export default class DocApi {
     // SyncUsingGET
     if (operationId && useOperationId) {
       //  整理 operationId 作为方法名
-      return operationId.replace(/(.+)(Using.+)/, '$1')
-      // name = operationId.replace(/_/, '')
+      const str = operationId.replace(/(.+)(Using.+)/, '$1')
+      let strs = _.lowerCase(str).split(' ').filter(Boolean)
+      strs = _.uniq(strs)
+      if (strs.length > 5) strs = strs.slice(0, 5)
+      return _.camelCase(strs.join(' '))
     } else {
       // 整理 url 作为方法名
       return getIdentifierFromUrl(apiPath, method, samePath)
     }
   }
 }
+
