@@ -379,7 +379,7 @@ export default async function (url: string | object, dict?: Dict, options?: Opti
       restoreCache(res, dict.cache)
     }
 
-    const docApi = new DocApi(res.json, useOperationId)
+    const docApi = new DocApi(res.json, useOperationId, dict)
     await docApi.init()
     return { docApi, dictList: res.dictList, warnList, errorList, cache: dict!.cache }
   } catch (error) {

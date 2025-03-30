@@ -8,6 +8,7 @@ import {
   checkName,
   firstToUpper,
   fixStartNum,
+  getCommonPrefix,
   getIdentifierFromUrl,
   getMaxSamePath,
   getSameName,
@@ -15,6 +16,7 @@ import {
   transformCamelCase
 } from '../common/utils'
 import _ from 'lodash'
+import type { Dict } from '../types'
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -53,7 +55,7 @@ export default class DocApi {
 
   private pathItems: PathItem[] = []
   typeGroup!: Components
-  constructor(public json: OpenAPIV3.Document, private useOperationId = true) {}
+  constructor(public json: OpenAPIV3.Document, private useOperationId = true, private dict?: Dict) {}
 
   async init() {
     // 1、翻译
@@ -157,6 +159,18 @@ export default class DocApi {
     //   moduleName = checkName(moduleName, n => names.includes(n))
     //   mod.moduleName = moduleName
     // })
+
+    const moduleSamePath = getCommonPrefix(moduleList.map(m => m.moduleName))
+    moduleList.forEach(mod => {
+      const { moduleName } = mod
+      if (moduleName === moduleSamePath) return
+      const newName = moduleName.replace(new RegExp(`^${moduleSamePath}`), '')
+      if (this.dict) {
+        const cache = this.dict.dict?.find(i => i.en === moduleName)
+        if (cache) cache.en = newName
+      }
+      mod.moduleName = newName
+    })
 
     return moduleList
   }

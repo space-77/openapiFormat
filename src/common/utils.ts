@@ -9,7 +9,15 @@ export function firstToUpper(str: string) {
   return str.replace(/^(\S)/g, val => val.toUpperCase())
 }
 
+/**
+ * 获取路径数组中所有路径的最大公共路径
+ * @param paths 路径数组，如 ['a/b/c', 'a/b/d']
+ * @param samePath 当前已匹配的公共路径，默认为空字符串
+ * @returns 最大公共路径字符串，如 '/a/b'
+ */
 export function getMaxSamePath(paths: string[], samePath = ''): string {
+  // ['a/b/c', 'a/b/c']
+  // if (!paths.length || paths.some(path => path === '')) return samePath
   if (!paths.length || paths.some(path => !path.includes('/'))) return samePath
 
   const segs = paths.map(path => {
@@ -53,6 +61,30 @@ export function getSameName(names: string[]) {
   }
 
   return sameName
+}
+
+/**
+ * 获取字符串数组的公共前缀
+ * @param strs 字符串数组
+ * @returns 公共前缀字符串
+ */
+export function getCommonPrefix(strs: string[]): string {
+  if (strs.length === 0) return ''
+
+  // 以第一个字符串作为基准
+  let prefix = strs[0]
+
+  for (let i = 1; i < strs.length; i++) {
+    // 逐个字符比较
+    while (strs[i].indexOf(prefix) !== 0) {
+      // 如果不匹配，缩短前缀
+      prefix = prefix.substring(0, prefix.length - 1)
+      // 如果前缀为空，直接返回
+      if (prefix === '') return ''
+    }
+  }
+
+  return prefix
 }
 
 export function toUpperFirstLetter(text: string) {
