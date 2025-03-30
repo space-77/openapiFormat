@@ -37,7 +37,7 @@ function translateTagNames(options: TagNamesOp) {
 
       tagsTranslateList.push(newTItem)
       tagTextEn = await translateProm
-      tagTextEn = Translate.startCaseClassName(tagTextEn, t.type, 3)
+      tagTextEn = Translate.startCaseClassName(tagTextEn, t.type, 12)
 
       tagTextEn = checkName(tagTextEn, n => !!rootTag.find(i => i.name === n))
       newTItem.textEn = tagTextEn
@@ -58,11 +58,14 @@ function translateTagNames(options: TagNamesOp) {
     if (rootTagInfo) {
       if (!tagText.split('').some(isChinese)) return // 正常数据，返回
       // 需要翻译
-      if (rootTagInfo.description?.split('').some(isChinese) || !rootTagInfo.description) {
-        // const tagTextEn = await onTranslate(tagText, index)
-        rootTagInfo.name = await onTranslate(tagText, index)
-        if (!rootTagInfo.description) rootTagInfo.description = tagText
-      }
+      rootTagInfo.name = await onTranslate(tagText, index)
+      if (!rootTagInfo.description) rootTagInfo.description = tagText
+
+      // if (rootTagInfo.description?.split('').some(isChinese) || !rootTagInfo.description) {
+      //   // const tagTextEn = await onTranslate(tagText, index)
+      //   rootTagInfo.name = await onTranslate(tagText, index)
+      //   if (!rootTagInfo.description) rootTagInfo.description = tagText
+      // }
     } else {
       // 根目录没有对应的 tag 需要添加
       let name = tagText
@@ -70,7 +73,7 @@ function translateTagNames(options: TagNamesOp) {
         // 需要翻译
         name = await onTranslate(tagText, index)
       }
-      rootTag.push({ name, description: name })
+      rootTag.push({ name, description: tagText })
     }
   })
 }
@@ -92,59 +95,69 @@ function fixTagName(textEn: string, type?: string) {
  * @description OpenApi3.x 数据翻译
  */
 async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType = TranslateType.english) {
-  if (translateType === TranslateType.none) return { data, dictList }
+  // if (translateType === TranslateType.none) return { data, dictList }
 
-  const t = new Translate(dictList, translateType)
+  const t = new Translate(dictList, translateType === TranslateType.none ? TranslateType.english : translateType)
   const textList: TextList[] = []
 
-  traverse(data).forEach(async function (value) {
+  const translateFn = async function (this: traverse.TraverseContext, value: string) {
     const { key, parent, isRoot } = this
     if (isRoot) return
     const subject = parent?.node
 
-    if (key === '$ref' && typeof value === 'string') {
-      const [, , typeInfoKey, refNname] = value.split('/')
-      let textEn = ''
-      if (refNname.split('').some(isChinese)) {
-        const item = textList.find(i => i.text === refNname)
+    if (translateType === TranslateType.none) {
+      if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
+        translateTagNames({ t, itemTags: value, subject: subject as any, data })
+      }
+    } else {
+      if (key === '$ref' && typeof value === 'string') {
+        const [, , typeInfoKey, refNname] = value.split('/')
+        let textEn = ''
+        if (refNname.split('').some(isChinese)) {
+          const item = textList.find(i => i.text === refNname)
 
-        if (!item) {
-          const translateProm = t.addTranslate(refNname)
-          const newItem: TextList = { text: refNname, subjects: [subject], translateProm: translateProm }
-          textList.push(newItem)
-          textEn = await translateProm
-          textEn = fixStartNum(textEn)
-          newItem.textEn = checkName(textEn, n => !!textList.find(i => i.textEn === n))
+          if (!item) {
+            const translateProm = t.addTranslate(refNname)
+            const newItem: TextList = { text: refNname, subjects: [subject], translateProm: translateProm }
+            textList.push(newItem)
+            textEn = await translateProm
+            textEn = fixStartNum(textEn)
+            newItem.textEn = checkName(textEn, n => !!textList.find(i => i.textEn === n))
 
-          if (newItem.textEn !== textEn) {
-            const dict = dictList.find(i => i.zh === refNname)
-            if (dict) dict.en = newItem.textEn
+            if (newItem.textEn !== textEn) {
+              const dict = dictList.find(i => i.zh === refNname)
+              if (dict) dict.en = newItem.textEn
+            }
+
+            newItem.subjects.forEach(i => {
+              i.$ref = i.$ref.replace(refNname, newItem.textEn!)
+            })
+          } else {
+            item.subjects.push(subject)
+            await item.translateProm
           }
-
-          newItem.subjects.forEach(i => {
-            i.$ref = i.$ref.replace(refNname, newItem.textEn!)
-          })
-        } else {
-          item.subjects.push(subject)
-          await item.translateProm
         }
+        const _data = data as any
+        const newRef = value.replace(refNname, textEn)
+        if (newRef !== value && _data[typeInfoKey] && _data[typeInfoKey][newRef] === undefined) {
+          _data[typeInfoKey][newRef] = _data[typeInfoKey][refNname]
+          delete _data[typeInfoKey][refNname]
+        }
+      } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
+        translateTagNames({ t, itemTags: value, subject: subject as any, data })
+      } else if (key === 'operationId') {
+        // 处理 方法名带下横杠
+        subject.operationId = Translate.startCaseClassName(value, translateType)
       }
-      const _data = data as any
-      const newRef = value.replace(refNname, textEn)
-      if (newRef !== value && _data[typeInfoKey] && _data[typeInfoKey][newRef] === undefined) {
-        _data[typeInfoKey][newRef] = _data[typeInfoKey][refNname]
-        delete _data[typeInfoKey][refNname]
-      }
-    } else if (key === 'tags' && (subject as any) !== data && Array.isArray(value) && value.length > 0) {
-      translateTagNames({ t, itemTags: value, subject: subject as any, data })
-    } else if (key === 'operationId') {
-      // 处理 方法名带下横杠
-      subject.operationId = Translate.startCaseClassName(value, translateType)
     }
+  }
+
+  traverse(data).forEach(function (value) {
+    translateFn.call(this, value)
   })
 
   await t.translate(fixTagName)
-  if (data.components) {
+  if (data.components && translateType !== TranslateType.none) {
     // 这里是处理没有被引用但key包含了中文的 components 的翻译，不处理应该也没事
     Object.values(data.components).forEach(moduleValue => {
       Object.entries(moduleValue).forEach(async ([key, value]) => {
@@ -354,7 +367,7 @@ function restoreCache({ json }: ApiData, cache: Dict['cache']) {
   })
 }
 
-type Options = { translateType?: TranslateType, useOperationId?: boolean }
+type Options = { translateType?: TranslateType; useOperationId?: boolean }
 export default async function (url: string | object, dict?: Dict, options?: Options) {
   const { translateType, useOperationId } = options ?? {}
   const { dict: dictList = [] } = dict ?? {}

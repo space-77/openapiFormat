@@ -96,10 +96,6 @@ export default class DocApi {
     }
     // const tagList = !Array.isArray(_tagList) || _tagList.length === 0 ? _tagList : []
 
-    // 兼容某些项目把swagger tag的name和description弄反的情况
-    // 当检测到name包含中文的时候，采用description
-    const flip = tagList.map(i => i.name).some(i => i.split('').some(isChinese))
-
     const moduleList: FuncGroup[] = []
 
     const notTagDes = 'Method without tag'
@@ -116,10 +112,16 @@ export default class DocApi {
         tags.forEach(tag => {
           const moduleItem = moduleList.find(i => i.tag === tag)
           if (!moduleItem) {
-            const tagInfo = tagList.find(i => i.name === tag) ?? {
-              name: flip ? notTagDes : tag ?? 'index',
-              description: flip ? tag ?? 'index' : notTagDes
+            // const flip = tagList.map(i => i.name).some(i => i.split('').some(isChinese))
+
+            const tagInfo = tagList.find(i => [i.name, i.description].filter(Boolean).includes(tag)) ?? {
+              name: 'index',
+              description: notTagDes
             }
+
+            // 兼容某些项目把swagger tag的name和description弄反的情况
+            // 当检测到name包含中文的时候，采用description
+            const flip = tagInfo.name.split('').some(isChinese)
 
             if (flip) {
               if (tagInfo.description) {

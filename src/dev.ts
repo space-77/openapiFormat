@@ -42,8 +42,44 @@ const url = 'http://8.130.142.178:9095/openapi.json'
 const json = require(path.join(__dirname, '../mock/apifox.json'))
 // // const openapi = new OpenApi(url)
 const dictPath = path.join(__dirname, '../mock/dict.json')
+// var traverse = require('traverse')
+import traverse from 'traverse'
+
 ~(async () => {
+  // var obj = {
+  //   a: [1, 2, 3],
+  //   b: 4,
+  //   c: [5, 6],
+  //   d: { e: [7, 8], f: 9 }
+  // }
+
+  // const leaves = []
+
+  // try {
+  //   console.log(typeof json)
+  // } catch (error) {
+  //   console.error(error)
+  // }
+
+  // traverse(json).map(async function (acc) {
+  //   const { key, parent, isRoot } = this
+  //   console.log({ isRoot })
+  //   if (isRoot) return this
+  //   return this
+  //   // console.log(this)
+  //   // if (this.isLeaf) acc.push(x)
+  //   // return acc
+  // })
+
+  // console.log(leaves)
   try {
+    // console.log();
+    // Object.values(json.paths).forEach((path: any) => {
+    //   Object.values(path).forEach((method: any) => {
+    //     console.log(method.tags)
+    //   })
+    // })
+
     const dict = require(dictPath) ?? []
     const res = await docInit(json , dict, { translateType: TranslateType.none })
     fs.writeFileSync(dictPath, JSON.stringify(res.dictList, null, 2))
@@ -110,3 +146,4 @@ const dictPath = path.join(__dirname, '../mock/dict.json')
 //   //   console.log(ele.attribs);
 //   // })
 // })()
+
