@@ -317,6 +317,7 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
       const isSwagger = /^2\.\d+/.test(data.swagger)
       if (isSwagger) {
         data = await convert(data)
+
         formatOpenapi3Name(data)
       }
 
@@ -386,3 +387,4 @@ export default async function (url: string | object, dict?: Dict, options?: Opti
     return Promise.reject(error)
   }
 }
+

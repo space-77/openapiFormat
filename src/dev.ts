@@ -39,7 +39,7 @@ const url = 'http://8.130.142.178:9095/openapi.json'
 // const url = 'https://generator3.swagger.io/openapi.json'
 // const url = 'https://mock.mengxuegu.com/mock/6384cdec9433403d6c06894e/openapi3/mock'
 
-const json = require(path.join(__dirname, '../mock/apifox.json'))
+const json = require(path.join(__dirname, '../mock/api1.json'))
 // // const openapi = new OpenApi(url)
 const dictPath = path.join(__dirname, '../mock/dict.json')
 // var traverse = require('traverse')
@@ -81,6 +81,7 @@ import traverse from 'traverse'
     // })
 
     const dict = require(dictPath) ?? []
+    // const res = await docInit(url , dict, { translateType: TranslateType.none })
     const res = await docInit(json , dict, { translateType: TranslateType.none })
     fs.writeFileSync(dictPath, JSON.stringify(res.dictList, null, 2))
     fs.writeFileSync(path.join(__dirname, '../mock/无翻译2.json'), JSON.stringify(res.docApi.json, null, 2))

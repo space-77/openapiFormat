@@ -9,6 +9,7 @@ import TypeInfoBase from './components/base'
 import Custom, { CustomObject, CustomOp } from './components/custom'
 import type { Document, ResponseObject } from '../types/openapi'
 import { commonTypeKey } from '../common/index'
+import TypeItem from './typeItem'
 
 export type ModuleName = 'schemas' | 'responses' | 'parameters' | 'requestBodies' | 'custom'
 // export type TypeInfoItem = {
@@ -191,10 +192,43 @@ export default class Components {
       const { allOf, anyOf, oneOf, typeItems } = typeInfo
 
       // allOf ,所有类型结合在一起
-      typeItems.push(..._.flatten(allOf))
-      typeInfo.typeItems = typeItems
+      if (allOf.length > 1) {
+        const [first, ...rest] = allOf
+        typeItems.push(...first)
+        for (let i = 0; i < rest.length; i++) {
+          const typeList = rest[i]
+          for (let j = 0; j < typeList.length; j++) {
+            const item = typeList[j]
+            const fIndex = typeItems.findIndex(i => i.name === item.name)
+            if (fIndex !== -1) typeItems[fIndex] = item
+            else typeItems.push(item)
+          }
+        }
+      }
 
-      // TODO anyOf 和 oneOf 待适配
+      // 处理 anyOf 和 oneOf 的通用函数 - 直接修改原有 item 属性
+      const processCompositeType = (typeList: TypeItem[][], typeName: 'anyOf' | 'oneOf'): TypeItem[] => {
+        return typeList.flatMap((typeItems, index) =>
+          typeItems.map(item => {
+            // 直接在原有 item 上修改属性，避免重新创建对象
+            item.required = false // 复合类型的属性应该是可选的
+            item.description = `${item.description || ''} (${typeName} option ${index + 1})`.trim()
+            return item
+          })
+        )
+      }
+
+      // anyOf, 任意一个类型满足即可 - 使用联合类型表示
+      if (anyOf.length > 0) {
+        typeItems.push(...processCompositeType(anyOf, 'anyOf'))
+      }
+
+      // oneOf, 其中一个类型满足 - 使用 discriminated union 或可选属性
+      if (oneOf.length > 0) {
+        typeItems.push(...processCompositeType(oneOf, 'oneOf'))
+      }
+
+      typeInfo.typeItems = typeItems
     })
   }
 
@@ -212,3 +246,4 @@ export default class Components {
     return typeInfo
   }
 }
+
