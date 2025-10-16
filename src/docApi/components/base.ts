@@ -69,14 +69,14 @@ export default abstract class TypeInfoBase {
     this.typeName = onlyName ? name : parent.checkName(firstToUpper(name), spaceName)
   }
 
-    /**
+  /**
    * @description 所在命名空间的名称
    */
-    getSpaceName(spaceName?: string) {
-      const { typeName, isTsType } = this
-      if (spaceName === this.spaceName) return typeName
-      return isTsType ? typeName : `${this.spaceName}.${typeName}`
-    }
+  getSpaceName(spaceName?: string) {
+    const { typeName, isTsType } = this
+    if (spaceName === this.spaceName) return typeName
+    return isTsType ? typeName : `${this.spaceName}.${typeName}`
+  }
 
   /**
    * @desc 获取真实类型，跳过空类型引用
@@ -155,6 +155,17 @@ export default abstract class TypeInfoBase {
     }
   }
 
+  // 处理 allOf, anyOf, oneOf 引用类型 mock/openapi3-1.json:4956
+  protected handleAllOfAnyOfOneOf(schema: BaseSchemaObject) {
+    const { allOf = [], anyOf = [], oneOf = [] } = schema
+
+    const allOfList = this.getTypeItem4List(allOf)
+    const anyOfList = this.getTypeItem4List(anyOf)
+    const oneOfList = this.getTypeItem4List(oneOf)
+
+    return { allOf: allOfList, anyOf: anyOfList, oneOf: oneOfList }
+  }
+
   protected createGenericsTypeinfo(items: ReferenceObject | SchemaObject, name: string): RefItem {
     // 继承泛型逻辑
 
@@ -200,15 +211,12 @@ export default abstract class TypeInfoBase {
 
   protected createSchemaTypeItem(schema: SchemaObject, name: string): TypeItem[] {
     const { items } = schema as Partial<ArraySchemaObject>
-    const { properties, additionalProperties, required = [], type, allOf, anyOf, oneOf } = schema
+    const { properties, additionalProperties, required = [], type } = schema
 
-    const allOfList = this.getTypeItem4List(allOf)
-    const anyOfList = this.getTypeItem4List(anyOf)
-    const oneOfList = this.getTypeItem4List(oneOf)
-
-    this.allOf.push(...allOfList)
-    this.anyOf.push(...anyOfList)
-    this.oneOf.push(...oneOfList)
+    const { allOf, anyOf, oneOf } = this.handleAllOfAnyOfOneOf(schema)
+    this.allOf.push(...allOf)
+    this.anyOf.push(...anyOf)
+    this.oneOf.push(...oneOf)
 
     // 泛型逻辑
     if (items) {
@@ -251,17 +259,10 @@ export default abstract class TypeInfoBase {
     const { $ref } = schema as ReferenceObject
     const { items } = schema as ArraySchemaObject // 数组需要泛型入参
 
-    const {
-      format,
-      example,
-      nullable,
-      properties = {},
-      deprecated,
-      description,
-      externalDocs,
-      enum: _enum = [],
-      required: childrenRequired = []
-    } = schema as BaseSchemaObject
+    const { format, example, nullable, properties = {}, deprecated } = schema as BaseSchemaObject
+    const { description, externalDocs, enum: _enum = [], required: childrenRequired = [] } = schema as BaseSchemaObject
+
+    const { allOf, anyOf, oneOf } = this.handleAllOfAnyOfOneOf(schema as BaseSchemaObject)
 
     const children = Object.entries(properties).map(([name, schema]) =>
       this.createSchemaType(name, schema, childrenRequired.includes(name))
@@ -270,7 +271,7 @@ export default abstract class TypeInfoBase {
     let enumName
     if (_enum.length > 0) enumName = this.parent.pushEnum(firstToUpper(keyName), _enum)
 
-    return new TypeItem({
+    const typeItem = new TypeItem({
       ref: items ? this.createGenericsTypeinfo(items, keyName) : undefined,
       format,
       typeRef: this.findRefType($ref),
@@ -285,6 +286,12 @@ export default abstract class TypeInfoBase {
       enumTypes: _enum, // FIXME 需要实现枚举类型
       type: enumName ?? this.getType(type, $ref)
     })
+
+    typeItem.allOf.push(...allOf)
+    typeItem.anyOf.push(...anyOf)
+    typeItem.oneOf.push(...oneOf)
+    
+    return typeItem
   }
 
   protected formatParameters(data: ParameterObject, apiInfo?: PathItem) {
@@ -303,3 +310,4 @@ export default abstract class TypeInfoBase {
     return typeItem
   }
 }
+

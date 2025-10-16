@@ -10,6 +10,8 @@ import { warnList, errorList } from './store/index'
 import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
 import Translate, { DictList, TranslateType } from './common/translate'
 import type { Dict } from './types/index'
+// import fs from 'fs'
+// import path from 'path'
 
 const tagType = 'tag'
 const fixNames = ['Interface', 'module']
@@ -320,6 +322,8 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
 
         formatOpenapi3Name(data)
       }
+
+      // fs.writeFileSync(path.join(__dirname, '../mock/openapi3-1.json'), JSON.stringify(data, null, 2))
 
       if (/^3\.\d+\.\d+$/.test(data.openapi ?? data.swagger)) {
         if (!isSwagger) formatV3Name(data)

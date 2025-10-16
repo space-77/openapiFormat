@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { isWord } from '../common/utils'
+import { isWord, mergeTypeOf } from '../common/utils'
 import { OpenAPIV3 } from 'openapi-types'
 import TypeInfoBase from './components/base'
 
@@ -42,6 +42,9 @@ export default class TypeItem {
   maxLength?: number
   format?: string
   disable: boolean
+  allOf: TypeItem[][] = [] // 所有类型组合在一起
+  anyOf: TypeItem[][] = [] // TODO，任意一个
+  oneOf: TypeItem[][] = [] // TODO，其中一个
   /** 泛型入参 */
   ref?: TypeItemOption['ref']
   // genericsItem?: string | TypeInfoBase | TypeItem /** 泛型入参 */ // 可能是 字符串， 可能是 引用类型， 可能是 引用类型也是需要入参的
@@ -86,8 +89,11 @@ export default class TypeItem {
    * @description 获取键值的类型
    */
   getKeyValue() {
+    // TODO 处理 allOf, anyOf, oneOf 引用类型
     const { type, nullable, children = [], ref, format } = this
     const { typeInfo, genericsItem } = ref ?? {} // 泛型
+
+    mergeTypeOf(this, children)
 
     let content = ''
     if (typeof type === 'string') {
@@ -159,3 +165,4 @@ export default class TypeItem {
     return `/**${exampleStr}${defaultStr}${descriptionStr}${deprecatedStr}${link}\r\n*/\r\n`
   }
 }
+
