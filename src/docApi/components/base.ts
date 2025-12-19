@@ -170,7 +170,7 @@ export default abstract class TypeInfoBase {
     // 继承泛型逻辑
 
     const { parent } = this
-    const { type } = items as SchemaObject
+    const { type, properties } = items as SchemaObject
     const { $ref } = items as ReferenceObject
     const { items: cItems } = items as ArraySchemaObject
     const option: SchemasOp = { parent, name: 'Array', data: items, moduleName: 'schemas', isTsType: true }
@@ -178,14 +178,19 @@ export default abstract class TypeInfoBase {
     let genericsItem: TypeInfoBase | string | undefined = 'any'
     if ($ref) {
       genericsItem = this.findRefType($ref)
-    } else if (typeof type === 'string') {
-      genericsItem = this.getType(type)
+    } else if (properties) {
+      const option: SchemasOp = { parent, name: firstToUpper(`${name}T`), data: items, moduleName: 'schemas' }
+      genericsItem = new Schemas(option)
+      genericsItem.init()
+      this.parent.pushTypeItem(genericsItem)
     } else if (cItems) {
       // 创建泛型类型
       const option: SchemasOp = { parent, name: firstToUpper(`${name}T`), data: cItems, moduleName: 'schemas' }
       genericsItem = new Schemas(option)
       genericsItem.init()
       this.parent.pushTypeItem(genericsItem)
+    } else if (typeof type === 'string') {
+      genericsItem = this.getType(type)
     }
     return { typeInfo, genericsItem }
   }

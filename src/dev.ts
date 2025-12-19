@@ -39,7 +39,8 @@ const url = 'http://8.130.142.178:9095/openapi.json'
 // const url = 'https://generator3.swagger.io/openapi.json'
 // const url = 'https://mock.mengxuegu.com/mock/6384cdec9433403d6c06894e/openapi3/mock'
 
-const json = require(path.join(__dirname, '../mock/api1.json'))
+// const json = require(path.join(__dirname, '../mock/api1.json'))
+const json = require(path.join(__dirname, '../mock/test123456.json'))
 // // const openapi = new OpenApi(url)
 const dictPath = path.join(__dirname, '../mock/dict.json')
 // var traverse = require('traverse')
