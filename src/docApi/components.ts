@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { PathItem } from './index'
 import Schemas, { SchemasOp } from './components/schemas'
-import Responses from './components/Responses'
+import Responses from './components/responses'
 import Parameters, { ParametersOp } from './components/parameters'
 import RequestBodies, { RequestBodiesOp } from './components/requestBodies'
 import { checkName, mergeTypeOf } from '../common/utils'
