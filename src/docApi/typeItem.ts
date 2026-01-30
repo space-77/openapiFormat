@@ -144,7 +144,7 @@ export default class TypeItem {
       .split('')
       .map(i => (isWord(i) ? i : '_'))
       .join('')
-    if (/\./.test(key)) key = `'${key}'`
+    if (/\./.test(key) || /^\d/.test(key)) key = `'${key}'`
 
     const desc = this.getDesc()
     let typeValue = this.getKeyValue()
