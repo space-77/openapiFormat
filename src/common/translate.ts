@@ -25,6 +25,10 @@ export interface AIConfig {
   maxTokens?: number
   temperature?: number
   enableThinking?: boolean
+  /**
+   * @description 是否启用 AI 优化方法名
+   */
+  enableFuncNameOptimize?: boolean
 }
 
 export enum TranslateCode {

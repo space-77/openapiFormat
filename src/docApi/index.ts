@@ -17,6 +17,8 @@ import {
 } from '../common/utils'
 import _ from 'lodash'
 import type { Dict } from '../types'
+import AIFunctionNamer, { FuncNameInfo } from '../common/aiFunctionNamer'
+import { AIConfig } from '../common/translate'
 
 // 数据模板： https://github.com/openapi/openapi/tree/master/src/mocks
 
@@ -55,14 +57,26 @@ export default class DocApi {
 
   private pathItems: PathItem[] = []
   typeGroup!: Components
-  constructor(public json: OpenAPIV3.Document, private useOperationId = true, private dict?: Dict) {}
+  private aiFunctionNamer?: AIFunctionNamer
+
+  constructor(
+    public json: OpenAPIV3.Document,
+    private useOperationId = true,
+    private dict?: Dict,
+    private aiConfig?: AIConfig
+  ) {
+    // 如果启用了 AI 方法名优化，创建 AIFunctionNamer 实例
+    if (aiConfig?.enableFuncNameOptimize) {
+      this.aiFunctionNamer = new AIFunctionNamer(aiConfig, dict)
+    }
+  }
 
   async init() {
     // 1、翻译
     // 2、先收集数据
     // 3、再整理数据
     const moduleList = this.funcGroup()
-    this.formatFunsV2(moduleList)
+    await this.formatFunsV2(moduleList)
     this.formatTypes()
   }
 
@@ -193,41 +207,115 @@ export default class DocApi {
     }
   }
 
-  private formatFunsV2(moduleList: FuncGroup[]) {
+  private async formatFunsV2(moduleList: FuncGroup[]) {
     const pathInfoList: PathInfo[] = []
     const funKeys = new Set<FuncGroupItem>([])
 
-    moduleList.forEach(moduleItem => {
-      const { funs, moduleName, tagInfo } = moduleItem
-      const names = new Set<string>([])
-      const samePath = getMaxSamePath(funs.map(i => i.apiPath.slice(1)))
+    // 如果启用了 AI 方法名优化，先处理所有模块
+    if (this.aiFunctionNamer) {
+      for (const moduleItem of moduleList) {
+        const { funs, moduleName } = moduleItem
 
-      const operationIds = funs.map(fun => fun.item.operationId).filter(Boolean) as string[]
-      const sameName = operationIds.length > 1 ? getSameName(operationIds) : ''
+        // 设置当前模块
+        this.aiFunctionNamer.setModuleName(moduleName)
 
-      const pathItems = funs.map(funInfo => {
-        const { item, method, apiPath } = funInfo
-        const  { operationId, summary, description } = item
-        let name = this.createFunName(apiPath, samePath, method, operationId)
-        if (name !== sameName) name = name.replace(new RegExp(`^${sameName}`), '')
-        if (names.has(name)) name += _.upperFirst(method)
-        name = checkName(name, checkName => names.has(checkName))
-        name = fixStartNum(name)
-        names.add(name)
+        // 收集方法信息
+        const funcNameInfos: FuncNameInfo[] = funs.map(funInfo => {
+          const { item, method, apiPath } = funInfo
+          const { operationId, summary, description } = item
 
-        const funItem = this.creatFunItem(funInfo, name, moduleName)
+          // 生成缓存 key
+          const cacheKey = operationId || `${method}_${apiPath}`
 
-        this.pathItems.push(funItem)
+          return {
+            apiPath,
+            method,
+            operationId,
+            summary,
+            description,
+            cacheKey
+          }
+        })
 
-        return funItem
+        // 调用 AI 批量优化方法名
+        const optimizedNames = await this.aiFunctionNamer.optimizeFuncNames(funcNameInfos)
+
+        // 使用优化后的名称生成 pathItems
+        const names = new Set<string>()
+        const samePath = getMaxSamePath(funs.map(i => i.apiPath.slice(1)))
+
+        const operationIds = funs.map(fun => fun.item.operationId).filter(Boolean) as string[]
+        const sameName = operationIds.length > 1 ? getSameName(operationIds) : ''
+
+        const pathItems = funs.map(funInfo => {
+          const { item, method, apiPath } = funInfo
+          const { operationId } = item
+
+          // 获取缓存 key
+          const cacheKey = operationId || `${method}_${apiPath}`
+
+          // 优先使用 AI 优化后的名称
+          let name = optimizedNames.get(cacheKey)
+
+          // 如果没有 AI 优化结果，使用原有逻辑生成
+          if (!name) {
+            name = this.createFunName(apiPath, samePath, method, operationId)
+          }
+
+          // 处理公共前缀
+          if (name !== sameName) name = name.replace(new RegExp(`^${sameName}`), '')
+
+          // 检查重复
+          if (names.has(name)) name += _.upperFirst(method)
+          name = checkName(name, checkName => names.has(checkName))
+          name = fixStartNum(name)
+          names.add(name)
+
+          const funItem = this.creatFunItem(funInfo, name, moduleName)
+          this.pathItems.push(funItem)
+          funKeys.add(funInfo)
+
+          return funItem
+        })
+
+        const pathInfo = { moduleName, tagInfo: moduleItem.tagInfo, pathItems }
+        pathInfoList.push(pathInfo)
+      }
+    } else {
+      // 原有逻辑（未启用 AI 优化）
+      moduleList.forEach(moduleItem => {
+        const { funs, moduleName, tagInfo } = moduleItem
+        const names = new Set<string>([])
+        const samePath = getMaxSamePath(funs.map(i => i.apiPath.slice(1)))
+
+        const operationIds = funs.map(fun => fun.item.operationId).filter(Boolean) as string[]
+        const sameName = operationIds.length > 1 ? getSameName(operationIds) : ''
+
+        const pathItems = funs.map(funInfo => {
+          const { item, method, apiPath } = funInfo
+          const { operationId } = item
+          let name = this.createFunName(apiPath, samePath, method, operationId)
+          if (name !== sameName) name = name.replace(new RegExp(`^${sameName}`), '')
+          if (names.has(name)) name += _.upperFirst(method)
+          name = checkName(name, checkName => names.has(checkName))
+          name = fixStartNum(name)
+          names.add(name)
+
+          const funItem = this.creatFunItem(funInfo, name, moduleName)
+
+          this.pathItems.push(funItem)
+          funKeys.add(funInfo)
+
+          return funItem
+        })
+
+        const pathInfo = { moduleName, tagInfo, pathItems }
+
+        pathInfoList.push(pathInfo)
+
+        return
       })
-
-      const pathInfo = { moduleName, tagInfo, pathItems }
-
-      pathInfoList.push(pathInfo)
-
-      return
-    })
+    }
 
     this.funcGroupList = pathInfoList
   }
