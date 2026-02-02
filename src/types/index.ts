@@ -18,5 +18,14 @@ export type Dict = {
      * @description  接口返回数据类型名
      */
     requestTypeNames: Record<string, string>
+
+    /**
+     * @description  接口方法名缓存
+     */
+    funcNameCache: {
+      funcName: Record<string, string>
+      moduleName: string
+    }[]
   }
 }
+

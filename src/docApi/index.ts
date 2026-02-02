@@ -207,7 +207,8 @@ export default class DocApi {
 
       const pathItems = funs.map(funInfo => {
         const { item, method, apiPath } = funInfo
-        let name = this.createFunName(apiPath, samePath, method, item.operationId)
+        const  { operationId, summary, description } = item
+        let name = this.createFunName(apiPath, samePath, method, operationId)
         if (name !== sameName) name = name.replace(new RegExp(`^${sameName}`), '')
         if (names.has(name)) name += _.upperFirst(method)
         name = checkName(name, checkName => names.has(checkName))

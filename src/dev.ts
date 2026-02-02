@@ -83,9 +83,16 @@ import traverse from 'traverse'
 
     const dict = require(dictPath) ?? []
     // const res = await docInit(url , dict, { translateType: TranslateType.none })
-    const res = await docInit(json , dict, { translateType: TranslateType.none })
+    const res = await docInit(json , dict, { translateType: TranslateType.ai, aiConfig: {
+      apiKey: 'ms-76ebb4fb-0fcd-4e03-98f6-22e3f97365bf',
+      baseURL: 'https://api-inference.modelscope.cn/v1',
+      model: 'deepseek-ai/DeepSeek-V3.2',
+      maxTokens: 2000,
+      temperature: 0.3,
+      enableThinking: true
+    } })
     fs.writeFileSync(dictPath, JSON.stringify(res.dictList, null, 2))
-    fs.writeFileSync(path.join(__dirname, '../mock/无翻译2.json'), JSON.stringify(res.docApi.json, null, 2))
+    fs.writeFileSync(path.join(__dirname, '../mock/ai翻译.json'), JSON.stringify(res.docApi.json, null, 2))
   } catch (error) {
     console.error(error)
   }

@@ -8,7 +8,7 @@ import { jsonrepair } from 'jsonrepair'
 import type { OpenAPIV3 } from 'openapi-types'
 import { warnList, errorList } from './store/index'
 import { checkName, fixStartNum, isChinese, isWord } from './common/utils'
-import Translate, { DictList, TranslateType } from './common/translate'
+import Translate, { DictList, TranslateType, AIConfig } from './common/translate'
 import type { Dict } from './types/index'
 // import fs from 'fs'
 // import path from 'path'
@@ -96,10 +96,14 @@ function fixTagName(textEn: string, type?: string) {
  * @param translateType
  * @description OpenApi3.x 数据翻译
  */
-async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType = TranslateType.english) {
+async function translateV3(data: OpenAPIV3.Document, dictList: DictList[], translateType = TranslateType.english, aiConfig?: AIConfig) {
   // if (translateType === TranslateType.none) return { data, dictList }
 
-  const t = new Translate(dictList, translateType === TranslateType.none ? TranslateType.english : translateType)
+  const t = new Translate(
+    dictList,
+    translateType === TranslateType.none ? TranslateType.english : translateType,
+    aiConfig
+  )
   const textList: TextList[] = []
 
   const translateFn = async function (this: traverse.TraverseContext, value: string) {
@@ -294,7 +298,7 @@ function convert(data: any) {
   })
 }
 
-async function getApiData(url: string | object, dictList: DictList[], translateType?: TranslateType) {
+async function getApiData(url: string | object, dictList: DictList[], translateType?: TranslateType, aiConfig?: AIConfig) {
   return new Promise<ApiData>(async (resolve, reject) => {
     try {
       let data: any = null
@@ -327,7 +331,7 @@ async function getApiData(url: string | object, dictList: DictList[], translateT
 
       if (/^3\.\d+\.\d+$/.test(data.openapi ?? data.swagger)) {
         if (!isSwagger) formatV3Name(data)
-        const { dictList: newDictList } = await translateV3(data, dictList, translateType)
+        const { dictList: newDictList } = await translateV3(data, dictList, translateType, aiConfig)
         resolve({ json: data, dictList: newDictList })
       } else {
         errorList.push({ msg: `Not swagger's JSON` })
@@ -372,15 +376,15 @@ function restoreCache({ json }: ApiData, cache: Dict['cache']) {
   })
 }
 
-type Options = { translateType?: TranslateType; useOperationId?: boolean }
+type Options = { translateType?: TranslateType; useOperationId?: boolean; aiConfig?: AIConfig }
 export default async function (url: string | object, dict?: Dict, options?: Options) {
-  const { translateType, useOperationId } = options ?? {}
+  const { translateType, useOperationId, aiConfig } = options ?? {}
   const { dict: dictList = [] } = dict ?? {}
   try {
-    const res = await getApiData(url, dictList, translateType)
+    const res = await getApiData(url, dictList, translateType, aiConfig)
 
     if (dict) {
-      if (!dict.cache) dict.cache = { idNames: {}, returnTypeNames: {}, requestTypeNames: {} }
+      if (!dict.cache) dict.cache = { idNames: {}, returnTypeNames: {}, requestTypeNames: {}, funcNameCache: [] }
       restoreCache(res, dict.cache)
     }
 
